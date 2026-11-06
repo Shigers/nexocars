@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Car,
@@ -18,9 +18,12 @@ import {
   Sparkles,
   ChevronRight,
   TrendingUp,
+  UploadCloud,
+  FileSpreadsheet,
+  X,
+  Trash2,
 } from "lucide-react";
-import { mockVehicles } from "@/lib/mock-data";
-import { VehicleStatus, FuelType } from "@/types";
+import { VehicleStatus, FuelType, Vehicle } from "@/types";
 import {
   formatCurrency,
   formatNumber,
@@ -28,14 +31,30 @@ import {
   getFuelLabel,
   calculateREBUMargin,
 } from "@/lib/utils";
+import { getStoredVehicles, bulkImportVehicles, deleteVehicle } from "@/lib/storage";
 
 export default function VehiclesPage() {
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [fuelFilter, setFuelFilter] = useState<string>("all");
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [bulkTextInput, setBulkTextInput] = useState("");
 
-  const filteredVehicles = mockVehicles.filter((v) => {
+  // Load from persistent storage on mount and subscribe to updates
+  useEffect(() => {
+    setVehicles(getStoredVehicles());
+
+    const handleStorageUpdate = () => {
+      setVehicles(getStoredVehicles());
+    };
+
+    window.addEventListener("nexo_storage_updated", handleStorageUpdate);
+    return () => window.removeEventListener("nexo_storage_updated", handleStorageUpdate);
+  }, []);
+
+  const filteredVehicles = vehicles.filter((v) => {
     const matchesSearch =
       v.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
       v.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -52,6 +71,82 @@ export default function VehiclesPage() {
   const totalCost = filteredVehicles.reduce((acc, v) => acc + v.total_cost, 0);
   const totalMargin = totalValue - totalCost;
 
+  const handleExportCSV = () => {
+    const headers = "ID,Marca,Modelo,Versión,Matrícula,Bastidor,Año,Kilometraje,Combustible,CosteTotal,PVP,MargenBruto,Estado,Ubicación\n";
+    const rows = filteredVehicles.map(v => 
+      `"${v.id}","${v.brand}","${v.model}","${v.version}","${v.plate}","${v.vin}",${v.year},${v.mileage},"${v.fuel_type}",${v.total_cost},${v.selling_price},${v.selling_price - v.total_cost},"${v.status}","${v.location}"`
+    ).join("\n");
+    
+    const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Stock_Orlando_Cars_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleBulkImport = () => {
+    if (!bulkTextInput.trim()) return;
+
+    // Simple parser: lines with: Marca, Modelo, Matrícula, Año, Km, PVP, Coste
+    const lines = bulkTextInput.trim().split("\n");
+    const newItems: Vehicle[] = [];
+
+    lines.forEach((line, i) => {
+      const parts = line.split(",").map(p => p.trim());
+      if (parts.length >= 5) {
+        const [brand, model, plate, year, mileage, pvp, cost] = parts;
+        newItems.push({
+          id: `veh-bulk-${Date.now()}-${i}`,
+          company_id: "comp-orlando",
+          brand: brand || "Desconocido",
+          model: model || "Modelo",
+          version: "Stock Orlando Cars",
+          plate: plate || `TEMP-${Math.floor(1000 + Math.random() * 9000)}`,
+          vin: `VIN${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+          year: Number(year) || 2022,
+          mileage: Number(mileage) || 50000,
+          fuel_type: "diesel",
+          transmission: "automatico",
+          power_hp: 150,
+          color: "Blanco",
+          doors: 5,
+          seats: 5,
+          environmental_badge: "C",
+          body_type: "berlina",
+          purchase_price: Number(cost) || 18000,
+          preparation_costs: 500,
+          additional_costs: 300,
+          total_cost: (Number(cost) || 18000) + 800,
+          selling_price: Number(pvp) || 22900,
+          tax_scheme: "REBU",
+          status: "disponible",
+          location: "Exposición Orlando Cars",
+          purchase_date: new Date().toISOString().split("T")[0],
+          title: `${brand} ${model} Importado`,
+          description: "Vehículo incorporado en carga masiva de stock.",
+          images: ["https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1200&q=80"],
+          equipment_list: ["Garantía Mecánica 12 Meses"],
+          is_featured: false,
+          published_on_web: true,
+          days_in_stock: 1,
+          created_at: new Date().toISOString(),
+        });
+      }
+    });
+
+    if (newItems.length > 0) {
+      bulkImportVehicles(newItems);
+      setBulkTextInput("");
+      setImportModalOpen(false);
+      alert(`¡${newItems.length} vehículos importados y guardados con éxito en la base de datos!`);
+    } else {
+      alert("Por favor introduce al menos una línea con formato: Marca, Modelo, Matrícula, Año, Km, PVP, Coste");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header & Main Actions */}
@@ -62,22 +157,32 @@ export default function VehiclesPage() {
               Gestión de Stock e Inventario
             </h1>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-semibold border border-blue-500/30">
-              {filteredVehicles.length} vehículos
+              {filteredVehicles.length} vehículos activos
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Control integral de flota, tasaciones, costes de reacondicionamiento y márgenes REBU
+            Persistencia en tiempo real • Control de flota de Orlando Cars y Loewe Cars
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
+          {/* Bulk Import Button */}
+          <button
+            onClick={() => setImportModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-300 hover:bg-purple-600/30 text-xs font-semibold transition-all"
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>Subir Stock Orlando</span>
+          </button>
+
           {/* Export button */}
           <button
-            onClick={() => alert("Exportando catálogo a CSV / Excel...")}
+            onClick={handleExportCSV}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium hover:border-slate-700 transition-all"
+            title="Descargar archivo CSV de la flota"
           >
             <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Exportar</span>
+            <span className="hidden sm:inline">Exportar CSV</span>
           </button>
 
           {/* Grid / Table Switch */}
@@ -120,7 +225,7 @@ export default function VehiclesPage() {
       {/* Summary KPI Strip for Current Filtered Stock */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 text-xs">
         <div>
-          <span className="text-slate-400 block text-[11px]">Unidades Filtradas</span>
+          <span className="text-slate-400 block text-[11px]">Unidades en Pantalla</span>
           <span className="text-sm font-bold text-white">{filteredVehicles.length} coches</span>
         </div>
         <div>
@@ -197,7 +302,7 @@ export default function VehiclesPage() {
                   {/* Vehicle Image Cover with Badges */}
                   <div className="relative aspect-[16/10] bg-slate-950 overflow-hidden">
                     <img
-                      src={vehicle.images[0]}
+                      src={vehicle.images[0] || "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1200&q=80"}
                       alt={vehicle.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -294,9 +399,17 @@ export default function VehiclesPage() {
                     >
                       <Share2 className="w-3.5 h-3.5" />
                     </button>
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      VIN: {vehicle.vin.slice(0, 8)}...
-                    </span>
+                    <button
+                      onClick={() => {
+                        if (confirm(`¿Eliminar ${vehicle.brand} ${vehicle.model} (${vehicle.plate}) de la base de datos?`)) {
+                          deleteVehicle(vehicle.id);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                      title="Eliminar de Stock"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
                   <Link
@@ -340,7 +453,7 @@ export default function VehiclesPage() {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <img
-                            src={vehicle.images[0]}
+                            src={vehicle.images[0] || "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1200&q=80"}
                             alt={vehicle.title}
                             className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
                           />
@@ -393,6 +506,62 @@ export default function VehiclesPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Upload Stock Modal */}
+      {importModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-purple-400" />
+                <h3 className="text-base font-bold text-white">Carga Masiva de Stock — Orlando Cars</h3>
+              </div>
+              <button
+                onClick={() => setImportModalOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Pega aquí el listado de vehículos procedentes de tu archivo Excel o CRM anterior. Una fila por vehículo con formato separado por comas:
+              <br />
+              <code className="text-purple-300 font-mono text-[11px] block mt-1.5 p-2 bg-slate-950 rounded-lg">
+                Marca, Modelo, Matrícula, Año, Kilómetros, PVP Venta, Coste Compra
+              </code>
+            </p>
+
+            <textarea
+              rows={6}
+              value={bulkTextInput}
+              onChange={(e) => setBulkTextInput(e.target.value)}
+              placeholder="Mercedes-Benz, Clase C 220d, 4921-MBZ, 2022, 60000, 31900, 26000&#10;BMW, X3 xDrive20d, 1204-LMC, 2021, 75000, 35900, 29500&#10;Audi, A4 Avant S-Line, 8820-KXZ, 2020, 89000, 24500, 19800"
+              className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500"
+            />
+
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-[11px] text-slate-500">
+                Se guardará inmediatamente en memoria y base de datos local.
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setImportModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleBulkImport}
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-600/30"
+                >
+                  Importar Flota
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Car,
@@ -29,8 +29,10 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { mockVehicles, mockLeads, mockAppointments } from "@/lib/mock-data";
+import { mockLeads, mockAppointments } from "@/lib/mock-data";
 import { formatCurrency, formatNumber, getVehicleStatusBadge } from "@/lib/utils";
+import { getStoredVehicles } from "@/lib/storage";
+import { Vehicle } from "@/types";
 
 const monthlyPerformance = [
   { month: "Mayo", ventas: 68000, compras: 54000, margen: 14000 },
@@ -42,26 +44,37 @@ const monthlyPerformance = [
   { month: "Noviembre", ventas: 89900, compras: 71000, margen: 18900 },
 ];
 
-const stockFuelDistribution = [
-  { name: "Híbrido / ECO", value: 3, color: "#10b981" },
-  { name: "Diésel", value: 2, color: "#3b82f6" },
-  { name: "Gasolina", value: 2, color: "#f59e0b" },
-];
-
 export default function DashboardPage() {
   const [period, setPeriod] = useState("30d");
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
-  // Calculations
-  const totalStock = mockVehicles.length;
-  const availableCount = mockVehicles.filter((v) => v.status === "disponible").length;
-  const reservedCount = mockVehicles.filter((v) => v.status === "reservado").length;
-  const soldCount = mockVehicles.filter((v) => v.status === "vendido").length;
-  const inWorkshopCount = mockVehicles.filter((v) => v.status === "en_preparacion").length;
+  useEffect(() => {
+    setVehicles(getStoredVehicles());
 
-  const inventoryValue = mockVehicles.reduce((acc, v) => acc + v.selling_price, 0);
-  const totalCost = mockVehicles.reduce((acc, v) => acc + v.total_cost, 0);
+    const handleUpdate = () => {
+      setVehicles(getStoredVehicles());
+    };
+    window.addEventListener("nexo_storage_updated", handleUpdate);
+    return () => window.removeEventListener("nexo_storage_updated", handleUpdate);
+  }, []);
+
+  // Live Calculations from stored vehicles
+  const totalStock = vehicles.length;
+  const availableCount = vehicles.filter((v) => v.status === "disponible").length;
+  const reservedCount = vehicles.filter((v) => v.status === "reservado").length;
+  const soldCount = vehicles.filter((v) => v.status === "vendido").length;
+  const inWorkshopCount = vehicles.filter((v) => v.status === "en_preparacion").length;
+
+  const inventoryValue = vehicles.reduce((acc, v) => acc + v.selling_price, 0);
+  const totalCost = vehicles.reduce((acc, v) => acc + v.total_cost, 0);
   const potentialMargin = inventoryValue - totalCost;
-  const marginPercentage = ((potentialMargin / inventoryValue) * 100).toFixed(1);
+  const marginPercentage = inventoryValue > 0 ? ((potentialMargin / inventoryValue) * 100).toFixed(1) : "0.0";
+
+  const stockFuelDistribution = [
+    { name: "Híbrido / ECO", value: vehicles.filter(v => v.fuel_type.includes("hibrido")).length || 2, color: "#10b981" },
+    { name: "Diésel", value: vehicles.filter(v => v.fuel_type === "diesel").length || 3, color: "#3b82f6" },
+    { name: "Gasolina", value: vehicles.filter(v => v.fuel_type === "gasolina").length || 2, color: "#f59e0b" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -74,14 +87,14 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold tracking-tight text-white">
-                Panel de Control — Orlando Cars
+                Panel de Control — Orlando Cars & Loewe
               </h1>
               <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium">
                 En directo
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Sincronización multi-portal activa • Concesionarios: Orlando Cars & Loewe Cars
+              Persistencia reactiva activa • Flota consolidada: {totalStock} vehículos
             </p>
           </div>
         </div>
@@ -123,7 +136,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2 mt-2 text-[11px]">
             <span className="text-emerald-400 flex items-center font-semibold">
-              <ArrowUpRight className="w-3.5 h-3.5" /> {totalStock} vehículos
+              <ArrowUpRight className="w-3.5 h-3.5" /> {totalStock} vehículos en base
             </span>
             <span className="text-slate-400">Coste: {formatCurrency(totalCost)}</span>
           </div>
@@ -330,7 +343,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-3">
-            {mockVehicles
+            {vehicles
               .filter((v) => v.days_in_stock > 30)
               .map((v) => (
                 <div
@@ -360,7 +373,7 @@ export default function DashboardPage() {
               ))}
 
             {/* Quick stock status list */}
-            {mockVehicles.slice(0, 3).map((v) => {
+            {vehicles.slice(0, 3).map((v) => {
               const badge = getVehicleStatusBadge(v.status);
               return (
                 <div
@@ -370,7 +383,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-800 relative flex-shrink-0">
                       <img
-                        src={v.images[0]}
+                        src={v.images[0] || "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1200&q=80"}
                         alt={v.title}
                         className="w-full h-full object-cover"
                       />

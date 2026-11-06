@@ -16,6 +16,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { formatCurrency, calculateREBUMargin } from "@/lib/utils";
+import { saveVehicle } from "@/lib/storage";
+import { Vehicle } from "@/types";
 
 export default function NewVehiclePage() {
   const router = useRouter();
@@ -29,12 +31,13 @@ export default function NewVehiclePage() {
   const [vin, setVin] = useState("");
   const [year, setYear] = useState(2023);
   const [mileage, setMileage] = useState(45000);
-  const [fuelType, setFuelType] = useState("diesel");
-  const [transmission, setTransmission] = useState("automatico");
+  const [fuelType, setFuelType] = useState<any>("diesel");
+  const [transmission, setTransmission] = useState<any>("automatico");
   const [powerHp, setPowerHp] = useState(150);
   const [color, setColor] = useState("Gris Metalizado");
-  const [environmentalBadge, setEnvironmentalBadge] = useState("ECO");
+  const [environmentalBadge, setEnvironmentalBadge] = useState<any>("ECO");
   const [bodyType, setBodyType] = useState("suv");
+  const [imageUrl, setImageUrl] = useState("https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1200&q=80");
 
   // Economics
   const [purchasePrice, setPurchasePrice] = useState(22000);
@@ -52,11 +55,58 @@ export default function NewVehiclePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+
+    const newVehicle: Vehicle = {
+      id: `veh-${Date.now()}`,
+      company_id: dealership === "Orlando Cars" ? "comp-orlando" : "comp-loewe",
+      brand,
+      model,
+      version: version || "Acabado Superior",
+      plate,
+      vin,
+      year: Number(year),
+      mileage: Number(mileage),
+      fuel_type: fuelType,
+      transmission,
+      power_hp: Number(powerHp),
+      color,
+      doors: 5,
+      seats: 5,
+      environmental_badge: environmentalBadge,
+      body_type: bodyType,
+      purchase_price: Number(purchasePrice),
+      preparation_costs: Number(preparationCosts),
+      additional_costs: Number(additionalCosts),
+      total_cost: totalCost,
+      selling_price: Number(sellingPrice),
+      financed_price: Number(financedPrice),
+      min_selling_price: Number(sellingPrice) * 0.96,
+      tax_scheme: "REBU",
+      status: "disponible",
+      location: dealership === "Orlando Cars" ? "Exposición Central - Orlando Cars" : "Showroom Exclusivo Loewe Cars",
+      purchase_date: new Date().toISOString().split("T")[0],
+      supplier_name: "Particular / Adquisición Directa",
+      title: `${brand} ${model} ${version} ${powerHp}CV`,
+      description: `Vehículo recién incorporado a la flota de ${dealership}. Revisión de 150 puntos superada con éxito. Garantía mecánica completa de 12 meses. Historial verificado.`,
+      images: [imageUrl],
+      equipment_list: [
+        "Etiqueta DGT " + environmentalBadge,
+        "Garantía Mecánica 12 Meses",
+        "Revisión Oficial Pre-Entrega",
+        "Financiación a Medida",
+      ],
+      is_featured: true,
+      published_on_web: true,
+      days_in_stock: 0,
+      created_at: new Date().toISOString(),
+    };
+
+    saveVehicle(newVehicle);
+
     setTimeout(() => {
       setSaving(false);
-      alert(`Vehículo ${brand} ${model} (${plate}) registrado con éxito en ${dealership}!`);
-      router.push("/vehicles");
-    }, 800);
+      router.push(`/vehicles/${newVehicle.id}`);
+    }, 400);
   };
 
   return (
@@ -75,7 +125,7 @@ export default function NewVehiclePage() {
               Alta de Nuevo Vehículo
             </h1>
             <p className="text-xs text-slate-400">
-              Introduce las especificaciones técnicas y los costes de compra para calcular el margen REBU
+              Persistencia real en el sistema con cálculo automático de margen REBU e integración en el stock
             </p>
           </div>
         </div>
@@ -100,15 +150,15 @@ export default function NewVehiclePage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Concesionario
+                  Concesionario Destino
                 </label>
                 <select
                   value={dealership}
                   onChange={(e) => setDealership(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-blue-500"
                 >
-                  <option value="Orlando Cars">Orlando Cars (Central)</option>
-                  <option value="Loewe Cars">Loewe Cars (Showroom Alta Gama)</option>
+                  <option value="Orlando Cars">Orlando Cars (Central Alcalá)</option>
+                  <option value="Loewe Cars">Loewe Cars (Showroom Pozuelo)</option>
                 </select>
               </div>
 
@@ -147,7 +197,7 @@ export default function NewVehiclePage() {
                 <input
                   type="text"
                   required
-                  placeholder="ej. Audi, BMW, Mercedes..."
+                  placeholder="ej. Mercedes-Benz, Audi, BMW..."
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
@@ -159,7 +209,7 @@ export default function NewVehiclePage() {
                 <input
                   type="text"
                   required
-                  placeholder="ej. Q5, Serie 3, Clase A..."
+                  placeholder="ej. Clase A, Q5, Serie 3..."
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
@@ -170,12 +220,23 @@ export default function NewVehiclePage() {
                 <label className="block text-xs font-medium text-slate-300 mb-1">Versión / Acabado</label>
                 <input
                   type="text"
-                  placeholder="ej. S Line S-Tronic 204CV"
+                  placeholder="ej. 200d AMG Line 8G-DCT"
                   value={version}
                   onChange={(e) => setVersion(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">URL de Fotografía Principal</label>
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://images.unsplash.com/..."
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
+              />
             </div>
           </div>
 
