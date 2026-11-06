@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Nexo-Car | Orlando Cars & Loewe",
-    short_name: "Nexo-Car",
+    name: "NEXOCAR • Orlando Cars & Loewe",
+    short_name: "NEXOCAR",
     description: "Plataforma integral de gestión de stock, tasaciones, publicaciones y CRM para Orlando Cars y Loewe Cars",
     start_url: "/",
     display: "standalone",

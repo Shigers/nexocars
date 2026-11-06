@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
+import { SplashScreen } from "@/components/layout/splash-screen";
 
 export const viewport: Viewport = {
   themeColor: "#090d14",
@@ -33,6 +34,7 @@ export default function RootLayout({
   return (
     <html lang="es" className="dark">
       <body className="min-h-screen bg-[#070b13] text-slate-100 flex overflow-x-hidden">
+        <SplashScreen />
         <AppShell>{children}</AppShell>
       </body>
     </html>

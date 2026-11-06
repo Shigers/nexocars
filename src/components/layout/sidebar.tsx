@@ -80,16 +80,22 @@ export function Sidebar() {
       <div className="p-3 border-b border-slate-800/80">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/30 flex-shrink-0">
-              <span className="text-xl tracking-tighter">N</span>
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-700 via-indigo-900 to-slate-950 border border-blue-500/40 flex items-center justify-center p-1.5 shadow-lg shadow-blue-900/30 flex-shrink-0">
+              <svg viewBox="0 0 512 512" className="w-full h-full drop-shadow-[0_0_8px_rgba(56,189,248,0.7)]">
+                <path d="M 256 65 L 375 110 C 375 220, 310 295, 256 325 C 202 295, 137 220, 137 110 Z" fill="#091024" stroke="#38bdf8" strokeWidth="18" />
+                <path d="M 175 210 Q 200 160, 256 160 Q 312 160, 337 210" fill="none" stroke="#ffffff" strokeWidth="24" strokeLinecap="round" />
+                <path d="M 165 210 L 200 235 L 312 235 L 347 210" fill="none" stroke="#60a5fa" strokeWidth="14" strokeLinecap="round" />
+                <circle cx="195" cy="225" r="14" fill="#38bdf8" />
+                <circle cx="317" cy="225" r="14" fill="#38bdf8" />
+              </svg>
             </div>
             {!collapsed && (
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-base tracking-tight text-white">NEXO-CAR</span>
+                  <span className="font-black text-base tracking-tight text-white">NEXO<span className="text-cyan-400">CAR</span></span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold border border-blue-500/30">PRO</span>
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium truncate">AutoPilot CRM & ERP</span>
+                <span className="text-[11px] text-slate-400 font-medium truncate">Orlando Cars &amp; Loewe</span>
               </div>
             )}
           </div>
