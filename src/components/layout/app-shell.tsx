@@ -6,9 +6,9 @@ import { Header } from "@/components/layout/header";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isPublicCatalog = pathname?.startsWith("/catalog");
+  const isStandalone = pathname?.startsWith("/catalog") || pathname?.startsWith("/tour");
 
-  if (isPublicCatalog) {
+  if (isStandalone) {
     return <div className="min-h-screen bg-[#070b13] w-full">{children}</div>;
   }
 
