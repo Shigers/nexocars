@@ -26,6 +26,7 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  Globe,
 } from "lucide-react";
 
 interface NavItem {
@@ -38,7 +39,8 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Inventario", href: "/vehicles", icon: Car, badge: "6 Activos" },
+  { name: "Web de Ventas", href: "/catalog", icon: Globe, badge: "Público", badgeColor: "bg-cyan-500/20 text-cyan-300" },
+  { name: "Inventario", href: "/vehicles", icon: Car, badge: "Stock Real" },
   { name: "Nuevo Vehículo", href: "/vehicles/new", icon: PlusCircle },
   { name: "Compras & Tasación", href: "/purchases", icon: ShoppingBag },
   { name: "Gastos & Costes", href: "/expenses", icon: Receipt },

@@ -23,7 +23,17 @@ export function getStoredVehicles(): Vehicle[] {
       localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(mockVehicles));
       return mockVehicles;
     }
-    return JSON.parse(raw);
+    const parsed: Vehicle[] = JSON.parse(raw);
+    // Merge any mock vehicles not in parsed list (e.g. freshly added real Orlando Cars stock)
+    const missingMocks = mockVehicles.filter(
+      (m) => !parsed.some((p) => p.id === m.id || p.plate === m.plate)
+    );
+    if (missingMocks.length > 0) {
+      const merged = [...parsed, ...missingMocks];
+      localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(merged));
+      return merged;
+    }
+    return parsed;
   } catch {
     return mockVehicles;
   }
