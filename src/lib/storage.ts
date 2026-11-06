@@ -178,9 +178,9 @@ export function deletePortal(portalKey: string): PortalPublication[] {
 
 export function togglePortalEnabled(portalKey: string): PortalPublication[] {
   const current = getStoredPortals();
-  const updated = current.map((p) => {
+  const updated: PortalPublication[] = current.map((p) => {
     if (p.portal === portalKey) {
-      const nextStatus = p.status === "publicado" ? "retirado" : "publicado";
+      const nextStatus: PortalPublication["status"] = p.status === "publicado" ? "retirado" : "publicado";
       return { ...p, status: nextStatus, enabled: nextStatus === "publicado" };
     }
     return p;
