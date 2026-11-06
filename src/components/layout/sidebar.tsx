@@ -24,6 +24,8 @@ import {
   ShieldCheck,
   PlusCircle,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface NavItem {
@@ -57,6 +59,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const [currentCompany, setCurrentCompany] = useState("Orlando Cars");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const companies = [
     { name: "Orlando Cars", label: "Sede Central (Alcalá)", icon: "OC" },
@@ -64,70 +67,102 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-[#070b13] border-r border-slate-800/80 flex flex-col h-screen sticky top-0 z-30 select-none">
+    <aside
+      className={`${
+        collapsed ? "w-[72px]" : "w-64"
+      } bg-[#070b13] border-r border-slate-800/80 flex flex-col h-screen sticky top-0 z-30 select-none transition-all duration-200 ease-in-out`}
+    >
       {/* Brand Header */}
-      <div className="p-4 border-b border-slate-800/80">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/30">
-            <span className="text-xl tracking-tighter">N</span>
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-base tracking-tight text-white">NEXO-CAR</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold border border-blue-500/30">PRO</span>
+      <div className="p-3 border-b border-slate-800/80">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/30 flex-shrink-0">
+              <span className="text-xl tracking-tighter">N</span>
             </div>
-            <span className="text-[11px] text-slate-400 font-medium">AutoPilot CRM & ERP</span>
+            {!collapsed && (
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-extrabold text-base tracking-tight text-white">NEXO-CAR</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold border border-blue-500/30">PRO</span>
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium truncate">AutoPilot CRM & ERP</span>
+              </div>
+            )}
           </div>
+
+          {/* Collapse / Expand Toggle Button */}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all flex-shrink-0"
+            title={collapsed ? "Expandir menú lateral" : "Plegar menú para ganar pantalla"}
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
 
         {/* Company Switcher */}
-        <div className="mt-4 relative">
-          <button
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all text-left text-xs"
-          >
-            <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-blue-400" />
-              <div>
-                <p className="font-semibold text-slate-200">{currentCompany}</p>
-                <p className="text-[10px] text-slate-400">
-                  {currentCompany === "Orlando Cars" ? "Grupo Orlando" : "División Alta Gama"}
-                </p>
+        {!collapsed ? (
+          <div className="mt-3 relative">
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all text-left text-xs"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Building2 className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-200 truncate">{currentCompany}</p>
+                  <p className="text-[10px] text-slate-400 truncate">
+                    {currentCompany === "Orlando Cars" ? "Grupo Orlando" : "División Alta Gama"}
+                  </p>
+                </div>
               </div>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-          </button>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 ml-1" />
+            </button>
 
-          {dropdownOpen && (
-            <div className="absolute left-0 right-0 top-full mt-1.5 rounded-lg bg-slate-900 border border-slate-800 shadow-2xl py-1 z-50">
-              <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                Cambiar Concesionario
+            {dropdownOpen && (
+              <div className="absolute left-0 right-0 top-full mt-1.5 rounded-lg bg-slate-900 border border-slate-800 shadow-2xl py-1 z-50">
+                <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  Cambiar Concesionario
+                </div>
+                {companies.map((c) => (
+                  <button
+                    key={c.name}
+                    onClick={() => {
+                      setCurrentCompany(c.name);
+                      setDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-800/80 transition-colors ${
+                      currentCompany === c.name ? "bg-blue-600/15 text-blue-400" : "text-slate-300"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-medium">{c.name}</p>
+                      <p className="text-[10px] text-slate-400">{c.label}</p>
+                    </div>
+                    {currentCompany === c.name && <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />}
+                  </button>
+                ))}
               </div>
-              {companies.map((c) => (
-                <button
-                  key={c.name}
-                  onClick={() => {
-                    setCurrentCompany(c.name);
-                    setDropdownOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-800/80 transition-colors ${
-                    currentCompany === c.name ? "bg-blue-600/15 text-blue-400" : "text-slate-300"
-                  }`}
-                >
-                  <div>
-                    <p className="text-xs font-medium">{c.name}</p>
-                    <p className="text-[10px] text-slate-400">{c.label}</p>
-                  </div>
-                  {currentCompany === c.name && <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          <div className="mt-2 flex justify-center">
+            <button
+              onClick={() => {
+                const next = currentCompany === "Orlando Cars" ? "Loewe Cars" : "Orlando Cars";
+                setCurrentCompany(next);
+              }}
+              title={`Activo: ${currentCompany}. Clic para alternar.`}
+              className="w-10 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 text-blue-400 font-bold text-[10px] flex items-center justify-center hover:bg-blue-600/30 transition-colors"
+            >
+              {currentCompany === "Orlando Cars" ? "OC" : "LC"}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Navigation Scroll */}
-      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
+      <nav className={`flex-1 overflow-y-auto ${collapsed ? "px-2 py-3" : "px-3 py-3"} space-y-1`}>
         {mainNavItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href) && item.href !== "/vehicles/new");
           const Icon = item.icon;
@@ -136,21 +171,24 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all group ${
+              title={collapsed ? `${item.name}${item.badge ? ` (${item.badge})` : ""}` : undefined}
+              className={`flex items-center ${
+                collapsed ? "justify-center p-2.5" : "justify-between px-3 py-2.5"
+              } rounded-lg text-xs font-medium transition-all group ${
                 isActive
                   ? "bg-gradient-to-r from-blue-600/20 to-blue-500/10 text-white font-semibold border-l-2 border-blue-500"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <Icon
-                  className={`w-4 h-4 transition-colors ${
+                  className={`w-4 h-4 flex-shrink-0 transition-colors ${
                     isActive ? "text-blue-400" : "text-slate-400 group-hover:text-slate-300"
                   }`}
                 />
-                <span>{item.name}</span>
+                {!collapsed && <span className="truncate">{item.name}</span>}
               </div>
-              {item.badge && (
+              {!collapsed && item.badge && (
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
                     item.badgeColor || "bg-slate-800 text-slate-300"
@@ -165,23 +203,32 @@ export function Sidebar() {
       </nav>
 
       {/* Live AI Status Pill */}
-      <div className="p-3 border-t border-slate-800/80">
-        <div className="p-3 rounded-xl bg-gradient-to-b from-slate-900 to-[#0c1424] border border-blue-900/30">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="text-[11px] font-semibold text-slate-200 flex items-center gap-1">
-              Copiloto Automotriz
-              <Sparkles className="w-3 h-3 text-purple-400" />
-            </span>
+      {!collapsed ? (
+        <div className="p-3 border-t border-slate-800/80">
+          <div className="p-3 rounded-xl bg-gradient-to-b from-slate-900 to-[#0c1424] border border-blue-900/30">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-[11px] font-semibold text-slate-200 flex items-center gap-1">
+                Copiloto Automotriz
+                <Sparkles className="w-3 h-3 text-purple-400" />
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+              6 vehículos analizados. 1 alerta de stock parado (&gt;40 días).
+            </p>
           </div>
-          <p className="text-[10px] text-slate-400 leading-relaxed">
-            6 vehículos analizados. 1 alerta de stock parado (&gt;40 días).
-          </p>
         </div>
-      </div>
+      ) : (
+        <div className="p-2 border-t border-slate-800/80 flex justify-center">
+          <span className="relative flex h-3 w-3" title="Copiloto Activo">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+          </span>
+        </div>
+      )}
     </aside>
   );
 }

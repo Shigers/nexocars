@@ -125,7 +125,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 w-full max-w-7xl mx-auto min-w-0">
       {/* Top Header & Breadcrumb */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="flex items-center gap-3">
@@ -193,51 +193,87 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Hero Strip: Key Specs & Holding Cost Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs">
         <div>
           <span className="text-slate-400 block text-[11px]">PVP Contado</span>
-          <span className="text-lg font-black text-white">{formatCurrency(vehicle.selling_price)}</span>
+          <span className="text-base sm:text-lg font-black text-white">{formatCurrency(vehicle.selling_price)}</span>
         </div>
         <div>
           <span className="text-slate-400 block text-[11px]">Coste Total</span>
-          <span className="text-lg font-bold text-slate-300">{formatCurrency(vehicle.total_cost)}</span>
+          <span className="text-base sm:text-lg font-bold text-slate-300">{formatCurrency(vehicle.total_cost)}</span>
         </div>
         <div>
           <span className="text-slate-400 block text-[11px]">Margen Real Hoy</span>
-          <span className="text-lg font-black text-emerald-400">
+          <span className="text-base sm:text-lg font-black text-emerald-400">
             +{formatCurrency(marginReal.realMarginToday)}
           </span>
         </div>
         <div>
           <span className="text-slate-400 block text-[11px]">Coste Campa (14€/d)</span>
-          <span className="text-sm font-bold text-amber-400">
+          <span className="text-xs sm:text-sm font-bold text-amber-400">
             -{formatCurrency(marginReal.holdingLoss)}
           </span>
         </div>
         <div>
           <span className="text-slate-400 block text-[11px]">Días en Stock</span>
-          <span className="text-sm font-bold text-white">
+          <span className="text-xs sm:text-sm font-bold text-white">
             {vehicle.days_in_stock} días
           </span>
         </div>
         <div>
           <span className="text-slate-400 block text-[11px]">Días a Margen 0</span>
-          <span className={`text-sm font-bold ${marginReal.isAtRisk ? "text-red-400 animate-pulse" : "text-emerald-400"}`}>
+          <span className={`text-xs sm:text-sm font-bold ${marginReal.isAtRisk ? "text-red-400 animate-pulse" : "text-emerald-400"}`}>
             {marginReal.daysToZero > 0 ? `${marginReal.daysToZero} días` : "En riesgo"}
           </span>
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-slate-800 overflow-x-auto text-xs font-medium pb-px">
+      {/* Tabs Navigation - 100% Adaptive to Screen Width (No Cut Offs) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 p-1.5 bg-slate-900/95 border border-slate-800 rounded-2xl text-xs font-medium shadow-inner">
         {[
-          { key: "general", label: "Información General", icon: Car },
-          { key: "fotos", label: `Fotografías & Estudio IA (${vehicle.images.length})`, icon: Wand2 },
-          { key: "gastos", label: `Gastos & Margen Real (${vehicleExpenses.length})`, icon: Receipt },
-          { key: "publicaciones", label: "Publicaciones Portales", icon: ExternalLink },
-          { key: "leads", label: `Clientes Interesados (${matchedLeads.length})`, icon: Users },
-          { key: "docs", label: "Documentación & PDF", icon: FileText },
-          { key: "historial", label: "Historial de Cambios", icon: Clock },
+          { key: "general", label: "General", fullLabel: "Información General", icon: Car },
+          {
+            key: "fotos",
+            label: "Fotos & IA",
+            fullLabel: "Fotografías & Estudio IA",
+            count: vehicle.images.length,
+            icon: Wand2,
+            countColor: "bg-cyan-500/20 text-cyan-300",
+          },
+          {
+            key: "gastos",
+            label: "Gastos & REBU",
+            fullLabel: "Gastos & Margen Real REBU",
+            count: vehicleExpenses.length,
+            icon: Receipt,
+            countColor: "bg-amber-500/20 text-amber-300",
+          },
+          {
+            key: "publicaciones",
+            label: "Portales",
+            fullLabel: "Publicaciones Portales",
+            icon: ExternalLink,
+          },
+          {
+            key: "leads",
+            label: "Clientes",
+            fullLabel: "Clientes Interesados CRM",
+            count: matchedLeads.length,
+            icon: Users,
+            countColor: "bg-blue-500/20 text-blue-300",
+          },
+          {
+            key: "docs",
+            label: "Documentos",
+            fullLabel: "Documentación & PDF",
+            icon: FileText,
+          },
+          {
+            key: "historial",
+            label: "Historial",
+            fullLabel: "Historial de Cambios",
+            icon: Clock,
+          },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
@@ -245,14 +281,24 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key as any)}
-              className={`flex items-center gap-2 px-4 py-2.5 border-b-2 font-semibold transition-all whitespace-nowrap ${
+              title={tab.fullLabel}
+              className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl font-semibold transition-all text-center min-w-0 ${
                 isActive
-                  ? "border-blue-500 text-blue-400 bg-blue-500/10 rounded-t-xl"
-                  : "border-transparent text-slate-400 hover:text-slate-200"
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 font-bold"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
-              <span>{tab.label}</span>
+              <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="truncate">{tab.label}</span>
+              {tab.count !== undefined && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0 leading-none ${
+                    isActive ? "bg-white/20 text-white" : tab.countColor
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              )}
             </button>
           );
         })}
