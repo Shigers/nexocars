@@ -14,6 +14,8 @@ import {
   AlertCircle,
   Building2,
   Sparkles,
+  Camera,
+  Image as ImageIcon,
 } from "lucide-react";
 import { formatCurrency, calculateREBUMargin } from "@/lib/utils";
 import { saveVehicle } from "@/lib/storage";
@@ -38,6 +40,7 @@ export default function NewVehiclePage() {
   const [environmentalBadge, setEnvironmentalBadge] = useState<any>("ECO");
   const [bodyType, setBodyType] = useState("suv");
   const [imageUrl, setImageUrl] = useState("https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1200&q=80");
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
 
   // Economics
   const [purchasePrice, setPurchasePrice] = useState(22000);
@@ -52,9 +55,28 @@ export default function NewVehiclePage() {
 
   const [saving, setSaving] = useState(false);
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const dataUrl = event.target.result as string;
+          setUploadedPhotos((prev) => [dataUrl, ...prev]);
+          setImageUrl(dataUrl); // Set as main image
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+
+    const allImages = uploadedPhotos.length > 0 ? uploadedPhotos : [imageUrl];
 
     const newVehicle: Vehicle = {
       id: `veh-${Date.now()}`,
@@ -88,7 +110,7 @@ export default function NewVehiclePage() {
       supplier_name: "Particular / Adquisición Directa",
       title: `${brand} ${model} ${version} ${powerHp}CV`,
       description: `Vehículo recién incorporado a la flota de ${dealership}. Revisión de 150 puntos superada con éxito. Garantía mecánica completa de 12 meses. Historial verificado.`,
-      images: [imageUrl],
+      images: allImages,
       equipment_list: [
         "Etiqueta DGT " + environmentalBadge,
         "Garantía Mecánica 12 Meses",
@@ -140,6 +162,100 @@ export default function NewVehiclePage() {
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Technical Details (2 Cols) */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Section 0: HIGH PRIORITY PHOTO UPLOAD BOX (PC / MOBILE) */}
+          <div className="p-6 rounded-2xl bg-gradient-to-b from-blue-950/40 via-slate-900 to-slate-900 border-2 border-blue-500/40 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center">
+                  <Camera className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-white">Fotografías del Vehículo (PC o Móvil)</h2>
+                  <p className="text-[11px] text-slate-400">Sube fotos directamente desde los archivos de tu ordenador o usa la cámara de tu móvil</p>
+                </div>
+              </div>
+              <span className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                ✓ Almacenamiento Local Activo
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Option 1: File from PC */}
+              <label className="cursor-pointer group flex flex-col items-center justify-center p-6 rounded-xl bg-slate-950 border-2 border-dashed border-blue-500/40 hover:border-blue-400 hover:bg-blue-600/5 transition-all text-center">
+                <Upload className="w-7 h-7 text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-bold text-white group-hover:text-blue-300">
+                  💻 Seleccionar desde Ordenador
+                </span>
+                <span className="text-[11px] text-slate-400 mt-1">
+                  Arrastra o examina imágenes (JPG, PNG, WEBP)
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+
+              {/* Option 2: Direct Mobile Camera */}
+              <label className="cursor-pointer group flex flex-col items-center justify-center p-6 rounded-xl bg-slate-950 border-2 border-dashed border-purple-500/40 hover:border-purple-400 hover:bg-purple-600/5 transition-all text-center">
+                <Camera className="w-7 h-7 text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-bold text-white group-hover:text-purple-300">
+                  📱 Tomar Foto con el Teléfono
+                </span>
+                <span className="text-[11px] text-slate-400 mt-1">
+                  Abre la cámara directamente en el móvil
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            {/* Uploaded Photos Preview Grid */}
+            {uploadedPhotos.length > 0 ? (
+              <div className="space-y-2 pt-2 border-t border-slate-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {uploadedPhotos.length} {uploadedPhotos.length === 1 ? "foto cargada" : "fotos cargadas"} para este vehículo
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUploadedPhotos([]);
+                      setImageUrl("https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1200&q=80");
+                    }}
+                    className="text-[11px] text-red-400 hover:underline"
+                  >
+                    Borrar todas
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  {uploadedPhotos.map((photo, i) => (
+                    <div key={i} className="relative aspect-[16/10] rounded-xl overflow-hidden border border-blue-500/50 shadow">
+                      <img src={photo} alt={`Subida ${i}`} className="w-full h-full object-cover" />
+                      {i === 0 && (
+                        <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-blue-600 text-white text-[9px] font-bold">
+                          Portada
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-[11px] text-slate-500 text-center italic">
+                (Si no subes foto ahora, se asignará una foto provisional que luego podrás cambiar o retocar con la IA)
+              </p>
+            )}
+          </div>
+
           {/* Section 1: Identification & Registration */}
           <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-slate-800 text-sm font-bold text-white">
@@ -226,17 +342,6 @@ export default function NewVehiclePage() {
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">URL de Fotografía Principal</label>
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://images.unsplash.com/..."
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
-              />
             </div>
           </div>
 

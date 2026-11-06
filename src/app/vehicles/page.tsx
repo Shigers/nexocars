@@ -22,6 +22,7 @@ import {
   FileSpreadsheet,
   X,
   Trash2,
+  Camera,
 } from "lucide-react";
 import { VehicleStatus, FuelType, Vehicle } from "@/types";
 import {
@@ -32,7 +33,7 @@ import {
   calculateREBUMargin,
   calculateRealCurrentMargin,
 } from "@/lib/utils";
-import { getStoredVehicles, bulkImportVehicles, deleteVehicle } from "@/lib/storage";
+import { getStoredVehicles, bulkImportVehicles, deleteVehicle, saveVehicle } from "@/lib/storage";
 
 export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -54,6 +55,24 @@ export default function VehiclesPage() {
     window.addEventListener("nexo_storage_updated", handleStorageUpdate);
     return () => window.removeEventListener("nexo_storage_updated", handleStorageUpdate);
   }, []);
+
+  const handleQuickUpload = (e: React.ChangeEvent<HTMLInputElement>, targetVeh: Vehicle) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const newUrl = event.target.result as string;
+          const updated = { ...targetVeh, images: [newUrl, ...targetVeh.images] };
+          saveVehicle(updated);
+          setVehicles(getStoredVehicles());
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 
   const filteredVehicles = vehicles.filter((v) => {
     const matchesSearch =
@@ -395,6 +414,21 @@ export default function VehiclesPage() {
                 {/* Card Actions Footer */}
                 <div className="p-3 bg-slate-950/60 border-t border-slate-800/80 flex items-center justify-between">
                   <div className="flex items-center gap-2">
+                    {/* Fast Photo Upload */}
+                    <label
+                      className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors cursor-pointer"
+                      title="Añadir foto desde PC o móvil"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleQuickUpload(e, vehicle)}
+                        className="hidden"
+                      />
+                    </label>
+
                     <button
                       onClick={() =>
                         alert(
@@ -504,12 +538,27 @@ export default function VehiclesPage() {
                       </td>
                       <td className="py-3 px-3 text-slate-400">{vehicle.days_in_stock} d</td>
                       <td className="py-3 px-4 text-right">
-                        <Link
-                          href={`/vehicles/${vehicle.id}`}
-                          className="px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-colors text-xs font-semibold"
-                        >
-                          Ver Ficha
-                        </Link>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <label
+                            className="p-1.5 rounded bg-slate-800 text-blue-400 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer"
+                            title="Subir foto desde PC o móvil"
+                          >
+                            <Camera className="w-3.5 h-3.5" />
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              onChange={(e) => handleQuickUpload(e, vehicle)}
+                              className="hidden"
+                            />
+                          </label>
+                          <Link
+                            href={`/vehicles/${vehicle.id}`}
+                            className="px-2.5 py-1 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-colors text-xs font-semibold"
+                          >
+                            Ver Ficha
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );

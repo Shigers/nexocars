@@ -31,6 +31,7 @@ import {
   Upload,
   Coins,
   TrendingDown,
+  Camera,
 } from "lucide-react";
 import { mockVehicles, mockExpenses, mockPortals, mockLeads } from "@/lib/mock-data";
 import {
@@ -156,6 +157,19 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
 
         {/* Quick Action Buttons */}
         <div className="flex items-center gap-2">
+          {/* Real Photo Upload Button (PC or Mobile) */}
+          <label className="cursor-pointer flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-600/30 transition-all">
+            <Camera className="w-4 h-4" />
+            <span>Subir Fotos (PC/Móvil)</span>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </label>
+
           <button
             onClick={() => window.print()}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition-all"
@@ -248,6 +262,86 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
       {activeTab === "general" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
+            {/* Visual Photo Card with Direct Upload Trigger */}
+            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-blue-400" />
+                  <h3 className="text-sm font-bold text-white">Fotografía Principal & Galería</h3>
+                </div>
+                <span className="text-xs text-slate-400">
+                  {vehicle.images.length} {vehicle.images.length === 1 ? "foto" : "fotos"}
+                </span>
+              </div>
+
+              {/* Main Photo Banner */}
+              <div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group">
+                <img
+                  src={vehicle.images[0]}
+                  alt={vehicle.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+
+                {/* Overlay Action Bar for Direct Upload */}
+                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    {/* Direct PC Upload */}
+                    <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg transition-all">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>💻 Subir desde PC</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {/* Direct Mobile Upload */}
+                    <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-lg transition-all">
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>📱 Tomar Foto Móvil</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Switch to AI Studio */}
+                  <button
+                    onClick={() => setActiveTab("fotos")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md border border-white/20 transition-all"
+                  >
+                    <Wand2 className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Estudio IA & Retoque Rayones →</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Mini Gallery Strip */}
+              {vehicle.images.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {vehicle.images.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="relative w-20 aspect-[16/10] rounded-lg overflow-hidden border border-slate-700 flex-shrink-0 cursor-pointer hover:border-blue-500"
+                      onClick={() => {
+                        setSelectedPhoto(img);
+                        setActiveTab("fotos");
+                      }}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
               <h3 className="text-sm font-bold text-white">Descripción Comercial</h3>
               <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">
@@ -386,14 +480,36 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                 )}
               </div>
 
-              {/* Photos Grid & Real Upload Button */}
-              <div className="flex items-center justify-between pb-2">
-                <span className="text-xs font-bold text-slate-300">Galería del Vehículo ({vehicle.images.length})</span>
-                <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600 hover:text-white transition-all text-xs font-semibold">
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Subir Fotos de tu PC / Móvil</span>
-                  <input type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
-                </label>
+              {/* Real Upload Dropzone & Action Buttons */}
+              <div className="p-4 rounded-2xl bg-slate-950 border-2 border-dashed border-blue-500/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-white block">Añadir más fotos a este vehículo</span>
+                    <span className="text-[11px] text-slate-400">Guarda en local de inmediato y queda disponible en portales</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                    Directo al Inventario
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <label className="cursor-pointer flex items-center justify-center gap-2 p-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md">
+                    <Upload className="w-4 h-4" />
+                    <span>💻 Subir desde PC / Archivo</span>
+                    <input type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
+                  </label>
+
+                  <label className="cursor-pointer flex items-center justify-center gap-2 p-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md">
+                    <Camera className="w-4 h-4" />
+                    <span>📱 Tomar Foto con Cámara Móvil</span>
+                    <input type="file" accept="image/*" capture="environment" onChange={handleFileUpload} className="hidden" />
+                  </label>
+                </div>
+              </div>
+
+              {/* Photos Grid */}
+              <div className="flex items-center justify-between pb-1">
+                <span className="text-xs font-bold text-slate-300">Galería ({vehicle.images.length} fotos) - Haz clic en una para editar en el estudio:</span>
               </div>
 
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
