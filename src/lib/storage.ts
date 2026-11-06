@@ -1,13 +1,15 @@
 "use client";
 
-import { Vehicle, Lead, Expense, Appointment } from "@/types";
-import { mockVehicles, mockLeads, mockExpenses, mockAppointments } from "./mock-data";
+import { Vehicle, Lead, Expense, Appointment, PortalPublication } from "@/types";
+import { mockVehicles, mockLeads, mockExpenses, mockAppointments, mockPortals } from "./mock-data";
 
 const STORAGE_KEYS = {
   VEHICLES: "nexo_car_vehicles_v1",
   LEADS: "nexo_car_leads_v1",
   EXPENSES: "nexo_car_expenses_v1",
   APPOINTMENTS: "nexo_car_appointments_v1",
+  PORTALS: "nexo_car_portals_v1",
+  VEHICLE_PORTALS: "nexo_car_veh_portals_v1",
 };
 
 // ---------------------------------------------------------------------------
@@ -118,4 +120,93 @@ export function saveExpense(expense: Expense): Expense[] {
     window.dispatchEvent(new Event("nexo_storage_updated"));
   }
   return updated;
+}
+
+// ---------------------------------------------------------------------------
+// MULTI-PORTAL DISTRIBUTOR PERSISTENCE & DYNAMIC PLATFORMS
+// ---------------------------------------------------------------------------
+export function getStoredPortals(): PortalPublication[] {
+  if (typeof window === "undefined") return mockPortals;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.PORTALS);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.PORTALS, JSON.stringify(mockPortals));
+      return mockPortals;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return mockPortals;
+  }
+}
+
+export function savePortal(portal: PortalPublication): PortalPublication[] {
+  const current = getStoredPortals();
+  const idx = current.findIndex((p) => p.portal === portal.portal);
+  let updated: PortalPublication[];
+  if (idx >= 0) {
+    updated = [...current];
+    updated[idx] = portal;
+  } else {
+    updated = [...current, portal];
+  }
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEYS.PORTALS, JSON.stringify(updated));
+    window.dispatchEvent(new Event("nexo_storage_updated"));
+  }
+  return updated;
+}
+
+export function deletePortal(portalKey: string): PortalPublication[] {
+  const current = getStoredPortals();
+  const updated = current.filter((p) => p.portal !== portalKey);
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEYS.PORTALS, JSON.stringify(updated));
+    window.dispatchEvent(new Event("nexo_storage_updated"));
+  }
+  return updated;
+}
+
+export function togglePortalEnabled(portalKey: string): PortalPublication[] {
+  const current = getStoredPortals();
+  const updated = current.map((p) => {
+    if (p.portal === portalKey) {
+      const nextStatus = p.status === "publicado" ? "retirado" : "publicado";
+      return { ...p, status: nextStatus, enabled: nextStatus === "publicado" };
+    }
+    return p;
+  });
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEYS.PORTALS, JSON.stringify(updated));
+    window.dispatchEvent(new Event("nexo_storage_updated"));
+  }
+  return updated;
+}
+
+export function getVehiclePortalMatrix(): Record<string, Record<string, boolean>> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.VEHICLE_PORTALS);
+    if (!raw) return {};
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+export function toggleVehiclePortalPublication(vehicleId: string, portalKey: string): boolean {
+  const currentMatrix = getVehiclePortalMatrix();
+  const vehMap = currentMatrix[vehicleId] || {};
+  const currentVal = vehMap[portalKey] !== undefined ? vehMap[portalKey] : true;
+  const newVal = !currentVal;
+
+  currentMatrix[vehicleId] = {
+    ...vehMap,
+    [portalKey]: newVal,
+  };
+
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEYS.VEHICLE_PORTALS, JSON.stringify(currentMatrix));
+    window.dispatchEvent(new Event("nexo_storage_updated"));
+  }
+  return newVal;
 }

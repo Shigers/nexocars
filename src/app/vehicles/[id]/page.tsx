@@ -44,15 +44,32 @@ import {
   calculateRealCurrentMargin,
   HOLDING_COST_PER_DAY,
 } from "@/lib/utils";
-import { getStoredVehicles, saveVehicle } from "@/lib/storage";
-import { Vehicle } from "@/types";
+import {
+  getStoredVehicles,
+  saveVehicle,
+  getStoredPortals,
+  getVehiclePortalMatrix,
+  toggleVehiclePortalPublication,
+} from "@/lib/storage";
+import { Vehicle, PortalPublication } from "@/types";
 
 export default function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehicles);
+  const [portals, setPortals] = useState<PortalPublication[]>(mockPortals);
+  const [portalMatrix, setPortalMatrix] = useState<Record<string, Record<string, boolean>>>({});
 
   useEffect(() => {
     setVehicles(getStoredVehicles());
+    setPortals(getStoredPortals());
+    setPortalMatrix(getVehiclePortalMatrix());
+    const handleSync = () => {
+      setVehicles(getStoredVehicles());
+      setPortals(getStoredPortals());
+      setPortalMatrix(getVehiclePortalMatrix());
+    };
+    window.addEventListener("nexo_storage_updated", handleSync);
+    return () => window.removeEventListener("nexo_storage_updated", handleSync);
   }, []);
 
   const vehicle = vehicles.find((v) => v.id === resolvedParams.id) || vehicles[0] || mockVehicles[0];
@@ -762,36 +779,67 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
       {/* TAB CONTENT: Multi-portal Publications */}
       {activeTab === "publicaciones" && (
         <div className="space-y-4">
-          <p className="text-xs text-slate-400">
-            Sincronización automática de este vehículo en los principales portales de compraventa automotriz.
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-white">Canales y Portales de Difusión Activos</h3>
+              <p className="text-xs text-slate-400">
+                Control individual de publicación para este vehículo. Los cambios se sincronizan en tiempo real.
+              </p>
+            </div>
+            <Link
+              href="/publications"
+              className="text-xs text-blue-400 hover:underline font-semibold flex items-center gap-1"
+            >
+              <span>Gestionar todas las plataformas →</span>
+            </Link>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {mockPortals.map((p) => (
-              <div
-                key={p.portal}
-                className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{p.logo}</span>
-                  <div>
-                    <h4 className="text-xs font-bold text-white">{p.name}</h4>
-                    <p className="text-[11px] text-slate-400">{p.last_synced}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {portals.map((p) => {
+              const vehMap = portalMatrix[vehicle.id];
+              const isPublished = p.status !== "retirado" && (vehMap?.[p.portal] !== undefined ? vehMap[p.portal] : true);
+              const isGlobalDisabled = p.status === "retirado";
+
+              return (
+                <div
+                  key={p.portal}
+                  className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${
+                    isPublished && !isGlobalDisabled
+                      ? "bg-slate-900 border-slate-800 shadow"
+                      : "bg-slate-950/70 border-slate-900 opacity-60"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{p.logo}</span>
+                    <div>
+                      <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <span>{p.name}</span>
+                        {p.is_custom && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-normal">
+                            A medida
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-[11px] text-slate-400">{p.last_synced || "Conectado"}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold ${
-                      p.status === "publicado"
-                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                        : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+
+                  <button
+                    onClick={() => !isGlobalDisabled && toggleVehiclePortalPublication(vehicle.id, p.portal)}
+                    disabled={isGlobalDisabled}
+                    className={`text-[10px] px-2.5 py-1 rounded-full font-bold transition-all flex items-center gap-1 ${
+                      isGlobalDisabled
+                        ? "bg-slate-800 text-slate-600 border border-slate-700 cursor-not-allowed"
+                        : isPublished
+                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30"
+                        : "bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700"
                     }`}
                   >
-                    {p.status}
-                  </span>
+                    <span>{isGlobalDisabled ? "Desactivado global" : isPublished ? "Publicado ✓" : "Pausado"}</span>
+                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

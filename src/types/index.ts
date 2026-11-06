@@ -128,10 +128,14 @@ export interface Appointment {
 }
 
 export interface PortalPublication {
-  portal: 'coches_net' | 'autoscout24' | 'wallapop' | 'milanuncios' | 'web_propia';
+  portal: string;
   name: string;
   logo: string;
   status: 'publicado' | 'pendiente' | 'borrador' | 'error' | 'retirado';
   last_synced?: string;
   ad_url?: string;
+  type?: 'api' | 'xml_feed' | 'ftp' | 'webhook';
+  feed_url?: string;
+  is_custom?: boolean;
+  enabled?: boolean;
 }
