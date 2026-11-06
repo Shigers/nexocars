@@ -41,40 +41,44 @@ export function SplashScreen() {
         
         {/* Glowing Automotive Emblem */}
         <div className="relative">
-          <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-cyan-400 to-indigo-600 rounded-3xl blur-xl opacity-40 animate-pulse" />
-          <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-3xl bg-[#091024] border border-blue-500/40 p-3 shadow-2xl flex items-center justify-center">
-            {/* Supercar Shield Icon */}
-            <svg viewBox="0 0 512 512" className="w-full h-full drop-shadow-[0_0_15px_rgba(56,189,248,0.5)]">
+          <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-cyan-400 to-indigo-600 rounded-3xl blur-2xl opacity-40 animate-pulse" />
+          <div className="relative w-44 h-28 md:w-56 md:h-32 rounded-3xl bg-[#091024]/90 border border-blue-500/40 p-3 shadow-2xl flex items-center justify-center">
+            {/* Aerodynamic Supercar SVG */}
+            <svg viewBox="0 0 512 280" className="w-full h-full drop-shadow-[0_0_15px_rgba(56,189,248,0.6)]">
               <defs>
-                <linearGradient id="splashMetal" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#38bdf8" />
-                  <stop offset="50%" stopColor="#ffffff" />
-                  <stop offset="100%" stopColor="#3b82f6" />
+                <linearGradient id="splashCar" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#0284c7" />
+                  <stop offset="35%" stopColor="#38bdf8" />
+                  <stop offset="70%" stopColor="#ffffff" />
+                  <stop offset="100%" stopColor="#0284c7" />
                 </linearGradient>
               </defs>
               <path
-                d="M 256 65 L 375 110 C 375 220, 310 295, 256 325 C 202 295, 137 220, 137 110 Z"
-                fill="#091024"
-                stroke="url(#splashMetal)"
-                strokeWidth="8"
-              />
-              <path
-                d="M 175 210 Q 200 160, 256 160 Q 312 160, 337 210"
+                d="M 60 180 C 110 145, 165 75, 256 75 C 347 75, 402 145, 452 180"
                 fill="none"
-                stroke="url(#splashMetal)"
-                strokeWidth="12"
+                stroke="url(#splashCar)"
+                strokeWidth="14"
                 strokeLinecap="round"
               />
               <path
-                d="M 165 210 L 200 235 L 312 235 L 347 210"
+                d="M 165 140 Q 256 95, 347 140"
                 fill="none"
-                stroke="#60a5fa"
-                strokeWidth="7"
+                stroke="#ffffff"
+                strokeWidth="6"
+                strokeLinecap="round"
+                opacity="0.85"
+              />
+              <path
+                d="M 50 180 L 120 220 L 392 220 L 462 180"
+                fill="none"
+                stroke="#38bdf8"
+                strokeWidth="10"
                 strokeLinecap="round"
               />
-              <circle cx="195" cy="225" r="7" fill="#38bdf8" />
-              <circle cx="317" cy="225" r="7" fill="#38bdf8" />
-              <polygon points="256,195 264,208 256,220 248,208" fill="#38bdf8" />
+              <path d="M 80 195 L 145 208 L 115 216 Z" fill="#38bdf8" />
+              <circle cx="120" cy="205" r="5" fill="#ffffff" />
+              <path d="M 432 195 L 367 208 L 397 216 Z" fill="#38bdf8" />
+              <circle cx="392" cy="205" r="5" fill="#ffffff" />
             </svg>
           </div>
         </div>
