@@ -27,6 +27,10 @@ import {
   Image as ImageIcon,
   Check,
   Eye,
+  AlertTriangle,
+  Upload,
+  Coins,
+  TrendingDown,
 } from "lucide-react";
 import { mockVehicles, mockExpenses, mockPortals, mockLeads } from "@/lib/mock-data";
 import {
@@ -36,8 +40,10 @@ import {
   getVehicleStatusBadge,
   getFuelLabel,
   calculateREBUMargin,
+  calculateRealCurrentMargin,
+  HOLDING_COST_PER_DAY,
 } from "@/lib/utils";
-import { getStoredVehicles } from "@/lib/storage";
+import { getStoredVehicles, saveVehicle } from "@/lib/storage";
 import { Vehicle } from "@/types";
 
 export default function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -63,7 +69,9 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
   const vehicleExpenses = mockExpenses.filter((e) => e.vehicle_id === vehicle.id);
   const matchedLeads = mockLeads.filter((l) => l.vehicle_id === vehicle.id);
   const statusBadge = getVehicleStatusBadge(vehicle.status);
-  const marginData = calculateREBUMargin(vehicle.selling_price, vehicle.total_cost);
+  
+  // Real Financial Holding Engine
+  const marginReal = calculateRealCurrentMargin(vehicle.selling_price, vehicle.total_cost, vehicle.days_in_stock);
 
   const handleApplyAIEnhancement = (type: "scratch_removed" | "showroom" | "plate_cover") => {
     setStudioProcessing(true);
@@ -93,6 +101,26 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
         setActiveEnhancement(type);
       }
     }, 700);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const newUrl = event.target.result as string;
+          const updatedImages = [newUrl, ...vehicle.images];
+          const updatedVeh = { ...vehicle, images: updatedImages };
+          saveVehicle(updatedVeh);
+          setSelectedPhoto(newUrl);
+          setVehicles(getStoredVehicles());
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   return (
@@ -150,10 +178,10 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </div>
 
-      {/* Hero Strip: Key Specs & Financial Summary */}
+      {/* Hero Strip: Key Specs & Holding Cost Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 p-4 rounded-2xl bg-slate-900/90 border border-slate-800 text-xs">
         <div>
-          <span className="text-slate-400 block text-[11px]">Precio Venta (Contado)</span>
+          <span className="text-slate-400 block text-[11px]">PVP Contado</span>
           <span className="text-lg font-black text-white">{formatCurrency(vehicle.selling_price)}</span>
         </div>
         <div>
@@ -161,33 +189,37 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
           <span className="text-lg font-bold text-slate-300">{formatCurrency(vehicle.total_cost)}</span>
         </div>
         <div>
-          <span className="text-slate-400 block text-[11px]">Margen Bruto REBU</span>
+          <span className="text-slate-400 block text-[11px]">Margen Real Hoy</span>
           <span className="text-lg font-black text-emerald-400">
-            +{formatCurrency(marginData.grossProfit)}
+            +{formatCurrency(marginReal.realMarginToday)}
           </span>
         </div>
         <div>
-          <span className="text-slate-400 block text-[11px]">Kilometraje</span>
-          <span className="text-sm font-bold text-white">{formatNumber(vehicle.mileage)} km</span>
+          <span className="text-slate-400 block text-[11px]">Coste Campa (14€/d)</span>
+          <span className="text-sm font-bold text-amber-400">
+            -{formatCurrency(marginReal.holdingLoss)}
+          </span>
         </div>
         <div>
-          <span className="text-slate-400 block text-[11px]">Combustible / DGT</span>
+          <span className="text-slate-400 block text-[11px]">Días en Stock</span>
           <span className="text-sm font-bold text-white">
-            {getFuelLabel(vehicle.fuel_type)} • {vehicle.environmental_badge}
+            {vehicle.days_in_stock} días
           </span>
         </div>
         <div>
-          <span className="text-slate-400 block text-[11px]">Tiempo en Stock</span>
-          <span className="text-sm font-bold text-amber-300">{vehicle.days_in_stock} días</span>
+          <span className="text-slate-400 block text-[11px]">Días a Margen 0</span>
+          <span className={`text-sm font-bold ${marginReal.isAtRisk ? "text-red-400 animate-pulse" : "text-emerald-400"}`}>
+            {marginReal.daysToZero > 0 ? `${marginReal.daysToZero} días` : "En riesgo"}
+          </span>
         </div>
       </div>
 
-      {/* Tabs Navigation (Section 6) */}
+      {/* Tabs Navigation */}
       <div className="flex items-center gap-2 border-b border-slate-800 overflow-x-auto text-xs font-medium pb-px">
         {[
           { key: "general", label: "Información General", icon: Car },
           { key: "fotos", label: `Fotografías & Estudio IA (${vehicle.images.length})`, icon: Wand2 },
-          { key: "gastos", label: `Gastos & Margen (${vehicleExpenses.length})`, icon: Receipt },
+          { key: "gastos", label: `Gastos & Margen Real (${vehicleExpenses.length})`, icon: Receipt },
           { key: "publicaciones", label: "Publicaciones Portales", icon: ExternalLink },
           { key: "leads", label: `Clientes Interesados (${matchedLeads.length})`, icon: Users },
           { key: "docs", label: "Documentación & PDF", icon: FileText },
@@ -267,7 +299,6 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
       {/* TAB CONTENT: Photographs & AI Photo Studio */}
       {activeTab === "fotos" && (
         <div className="space-y-6">
-          {/* Main Visualizer with Live AI Studio */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left 2 Cols: The High-Res Viewer */}
             <div className="lg:col-span-2 space-y-3">
@@ -340,7 +371,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 )}
 
-                {/* Compare Button (Hold to see original) */}
+                {/* Compare Button */}
                 {activeEnhancement !== "none" && !studioProcessing && (
                   <button
                     onMouseDown={() => setShowOriginal(true)}
@@ -355,7 +386,16 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                 )}
               </div>
 
-              {/* Photos Grid Selector */}
+              {/* Photos Grid & Real Upload Button */}
+              <div className="flex items-center justify-between pb-2">
+                <span className="text-xs font-bold text-slate-300">Galería del Vehículo ({vehicle.images.length})</span>
+                <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600 hover:text-white transition-all text-xs font-semibold">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Subir Fotos de tu PC / Móvil</span>
+                  <input type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
+                </label>
+              </div>
+
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
                 {vehicle.images.map((img, idx) => (
                   <button
@@ -388,7 +428,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                 </p>
               </div>
 
-              {/* Action 1: Remove Scratches & Defects */}
+              {/* Action 1 */}
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-emerald-500/40 transition-all space-y-2 group">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
@@ -399,7 +439,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Elimina rozaduras en paragolpes, pequeños arañazos o marcas de llaves en la carrocería si el coche se va a reparar en taller.
+                  Elimina rozaduras en paragolpes o marcas si el coche se va a reparar en taller de chapa y pintura.
                 </p>
                 <button
                   onClick={() => handleApplyAIEnhancement("scratch_removed")}
@@ -411,7 +451,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                 </button>
               </div>
 
-              {/* Action 2: Virtual Showroom Background */}
+              {/* Action 2 */}
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-purple-500/40 transition-all space-y-2 group">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white group-hover:text-purple-400 transition-colors">
@@ -422,7 +462,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Sustituye la foto hecha en campa o calle por una sala de exposición limpia con suelo pulido y branding de Orlando Cars o Loewe Cars.
+                  Sustituye la foto en campa por una sala de exposición limpia con suelo pulido y branding de Orlando / Loewe Cars.
                 </p>
                 <button
                   onClick={() => handleApplyAIEnhancement("showroom")}
@@ -434,7 +474,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                 </button>
               </div>
 
-              {/* Action 3: Corporate Plate Cover */}
+              {/* Action 3 */}
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-blue-500/40 transition-all space-y-2 group">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">
@@ -445,7 +485,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Oculta la matrícula original y coloca la placa decorativa con el logotipo de la empresa para evitar duplicados en internet.
+                  Oculta la matrícula original y coloca la placa decorativa oficial para proteger la identidad del vehículo.
                 </p>
                 <button
                   onClick={() => handleApplyAIEnhancement("plate_cover")}
@@ -456,47 +496,70 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                   <span>Aplicar Placa Orlando / Loewe</span>
                 </button>
               </div>
-
-              {/* Save & Publish Enhanced Photo */}
-              {activeEnhancement !== "none" && (
-                <div className="pt-2 border-t border-slate-800">
-                  <button
-                    onClick={() =>
-                      alert("¡Fotografía mejorada guardada en el catálogo oficial de Coches.net, Wallapop y Web!")
-                    }
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-black text-xs shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02]"
-                  >
-                    Guardar Foto Mejorada para Portales
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* TAB CONTENT: Expenses & Margins */}
+      {/* TAB CONTENT: Expenses & Margins with Real Holding Cost Matrix */}
       {activeTab === "gastos" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-              <span className="text-xs text-slate-400">Coste de Compra Original</span>
-              <p className="text-xl font-bold text-white mt-1">{formatCurrency(vehicle.purchase_price)}</p>
+          {/* Holding Cost Matrix Alert */}
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-[#101b30] to-slate-900 border border-blue-900/50 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Coins className="w-5 h-5 text-amber-400" />
+                <h3 className="text-sm font-bold text-white">
+                  Auditoría Financiera de Campa (Erosión por Días de Inmovilización)
+                </h3>
+              </div>
+              <span className="text-[10px] px-2.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">
+                Tasa de Campa: 14 € / día
+              </span>
             </div>
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-              <span className="text-xs text-slate-400">Gastos Imputados de Taller</span>
-              <p className="text-xl font-bold text-amber-300 mt-1">
-                {formatCurrency(vehicle.preparation_costs + vehicle.additional_costs)}
-              </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+                <span className="text-[10px] text-slate-400 block">Margen Bruto Inicial REBU</span>
+                <span className="text-sm font-bold text-white">+{formatCurrency(marginReal.initialGrossMargin)}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+                <span className="text-[10px] text-slate-400 block">Coste Acumulado ({vehicle.days_in_stock} días)</span>
+                <span className="text-sm font-bold text-red-400">-{formatCurrency(marginReal.holdingLoss)}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                <span className="text-[10px] text-emerald-300 block">Margen Real a Día de Hoy</span>
+                <span className="text-sm font-black text-emerald-400">+{formatCurrency(marginReal.realMarginToday)}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
+                <span className="text-[10px] text-slate-400 block">Días Restantes a Margen 0</span>
+                <span className={`text-sm font-bold ${marginReal.isAtRisk ? "text-red-400" : "text-cyan-400"}`}>
+                  {marginReal.daysToZero > 0 ? `${marginReal.daysToZero} días` : "¡Sin margen!"}
+                </span>
+              </div>
             </div>
-            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
-              <span className="text-xs text-emerald-300">Margen Neto (REBU)</span>
-              <p className="text-xl font-black text-emerald-400 mt-1">
-                +{formatCurrency(marginData.netProfit)}
-              </p>
-            </div>
+
+            {/* Price cut suggestion if stock is slow */}
+            {vehicle.days_in_stock >= 40 && (
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-amber-300">
+                  <TrendingDown className="w-4 h-4" />
+                  <span>
+                    <strong>Recomendación del Copiloto:</strong> Bajar precio de {formatCurrency(vehicle.selling_price)} a{" "}
+                    <strong>{formatCurrency(marginReal.suggestedPrice)}</strong> para acelerar venta conservando margen.
+                  </span>
+                </div>
+                <button
+                  onClick={() => alert(`Precio actualizado a ${formatCurrency(marginReal.suggestedPrice)}`)}
+                  className="px-3 py-1 rounded-lg bg-amber-600 text-white font-bold text-xs hover:bg-amber-500"
+                >
+                  Aplicar Bajada
+                </button>
+              </div>
+            )}
           </div>
 
+          {/* Expenses Table */}
           <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
             <div className="p-4 border-b border-slate-800 flex items-center justify-between">
               <h3 className="text-xs font-bold text-white uppercase tracking-wider">

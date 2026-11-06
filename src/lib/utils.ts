@@ -63,6 +63,51 @@ export function calculateREBUMargin(sellingPrice: number, totalCost: number, tax
   };
 }
 
+/**
+ * FINANCIAL HOLDING COST & STOCK DEPRECIATION
+ * Coste diario por tener el coche parado en campa (interés de crédito de stock, seguro, ocupación).
+ * Estándar de compraventa en España: 14 € / día.
+ */
+export const HOLDING_COST_PER_DAY = 14;
+
+export function calculateHoldingCost(daysInStock: number, holdingPerDay = HOLDING_COST_PER_DAY) {
+  const safeDays = Math.max(0, daysInStock);
+  return safeDays * holdingPerDay;
+}
+
+export function calculateRealCurrentMargin(
+  sellingPrice: number,
+  totalCost: number,
+  daysInStock: number,
+  holdingPerDay = HOLDING_COST_PER_DAY
+) {
+  const rebu = calculateREBUMargin(sellingPrice, totalCost);
+  const holdingLoss = calculateHoldingCost(daysInStock, holdingPerDay);
+  const realMarginToday = rebu.grossProfit - holdingLoss;
+  const daysToZero =
+    rebu.grossProfit > 0 && holdingPerDay > 0
+      ? Math.floor(rebu.grossProfit / holdingPerDay) - daysInStock
+      : 0;
+
+  // Suggested discount price for stagnant stock (>40 days)
+  let suggestedPrice = sellingPrice;
+  if (daysInStock >= 40 && sellingPrice > 0) {
+    const cut = Math.max(sellingPrice * 0.03, Math.max(realMarginToday, 0) * 0.4);
+    const target = sellingPrice - Math.min(cut, sellingPrice * 0.08);
+    suggestedPrice = Math.floor(target / 100) * 100 - 10; // Rounded to attractive 90 EUR ending
+  }
+
+  return {
+    initialGrossMargin: rebu.grossProfit,
+    initialNetProfit: rebu.netProfit,
+    holdingLoss,
+    realMarginToday,
+    daysToZero,
+    isAtRisk: daysToZero <= 15,
+    suggestedPrice,
+  };
+}
+
 export function getVehicleStatusBadge(status: VehicleStatus) {
   switch (status) {
     case "disponible":

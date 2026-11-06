@@ -68,6 +68,8 @@ export default function DashboardPage() {
   const inventoryValue = vehicles.reduce((acc, v) => acc + v.selling_price, 0);
   const totalCost = vehicles.reduce((acc, v) => acc + v.total_cost, 0);
   const potentialMargin = inventoryValue - totalCost;
+  const totalHoldingLoss = vehicles.reduce((acc, v) => acc + (v.days_in_stock * 14), 0);
+  const realMarginToday = potentialMargin - totalHoldingLoss;
   const marginPercentage = inventoryValue > 0 ? ((potentialMargin / inventoryValue) * 100).toFixed(1) : "0.0";
 
   const stockFuelDistribution = [
@@ -142,22 +144,22 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* KPI 2: Gross Margin & REBU */}
+        {/* KPI 2: Gross Margin & Real Margin with Holding Cost */}
         <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xs font-medium">Margen Bruto Proyectado</span>
+            <span className="text-xs font-medium">Margen Real a Día de Hoy</span>
             <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-black text-emerald-400 tracking-tight">
-            {formatCurrency(potentialMargin)}
+            +{formatCurrency(realMarginToday)}
           </div>
-          <div className="flex items-center gap-2 mt-2 text-[11px]">
-            <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold">
-              {marginPercentage}% de margen
+          <div className="flex items-center justify-between mt-2 text-[11px]">
+            <span className="text-amber-400 font-semibold">
+              Campa: -{formatCurrency(totalHoldingLoss)}
             </span>
-            <span className="text-slate-400">Régimen REBU</span>
+            <span className="text-slate-400">Bruto: {formatCurrency(potentialMargin)}</span>
           </div>
         </div>
 

@@ -30,6 +30,7 @@ import {
   getVehicleStatusBadge,
   getFuelLabel,
   calculateREBUMargin,
+  calculateRealCurrentMargin,
 } from "@/lib/utils";
 import { getStoredVehicles, bulkImportVehicles, deleteVehicle } from "@/lib/storage";
 
@@ -70,6 +71,8 @@ export default function VehiclesPage() {
   const totalValue = filteredVehicles.reduce((acc, v) => acc + v.selling_price, 0);
   const totalCost = filteredVehicles.reduce((acc, v) => acc + v.total_cost, 0);
   const totalMargin = totalValue - totalCost;
+  const totalHoldingLoss = filteredVehicles.reduce((acc, v) => acc + (v.days_in_stock * 14), 0);
+  const totalRealMargin = totalMargin - totalHoldingLoss;
 
   const handleExportCSV = () => {
     const headers = "ID,Marca,Modelo,Versión,Matrícula,Bastidor,Año,Kilometraje,Combustible,CosteTotal,PVP,MargenBruto,Estado,Ubicación\n";
@@ -223,7 +226,7 @@ export default function VehiclesPage() {
       </div>
 
       {/* Summary KPI Strip for Current Filtered Stock */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 text-xs">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 text-xs">
         <div>
           <span className="text-slate-400 block text-[11px]">Unidades en Pantalla</span>
           <span className="text-sm font-bold text-white">{filteredVehicles.length} coches</span>
@@ -233,13 +236,17 @@ export default function VehiclesPage() {
           <span className="text-sm font-bold text-white">{formatCurrency(totalValue)}</span>
         </div>
         <div>
-          <span className="text-slate-400 block text-[11px]">Coste Total Adquisición + Taller</span>
+          <span className="text-slate-400 block text-[11px]">Coste Adquisición + Taller</span>
           <span className="text-sm font-bold text-slate-300">{formatCurrency(totalCost)}</span>
         </div>
         <div>
-          <span className="text-slate-400 block text-[11px]">Margen Bruto Proyectado</span>
+          <span className="text-slate-400 block text-[11px]">Coste Campa (14€/día)</span>
+          <span className="text-sm font-bold text-amber-400">-{formatCurrency(totalHoldingLoss)}</span>
+        </div>
+        <div>
+          <span className="text-slate-400 block text-[11px]">Margen Real a Día de Hoy</span>
           <span className="text-sm font-bold text-emerald-400">
-            {formatCurrency(totalMargin)} ({totalValue > 0 ? ((totalMargin / totalValue) * 100).toFixed(1) : 0}%)
+            +{formatCurrency(totalRealMargin)}
           </span>
         </div>
       </div>
@@ -291,7 +298,7 @@ export default function VehiclesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredVehicles.map((vehicle) => {
             const statusBadge = getVehicleStatusBadge(vehicle.status);
-            const marginData = calculateREBUMargin(vehicle.selling_price, vehicle.total_cost);
+            const marginReal = calculateRealCurrentMargin(vehicle.selling_price, vehicle.total_cost, vehicle.days_in_stock);
 
             return (
               <div
@@ -373,12 +380,12 @@ export default function VehiclesPage() {
                         )}
                       </div>
                       <div className="text-right">
-                        <span className="text-[10px] text-slate-400 block">Margen REBU</span>
-                        <span className="text-xs font-bold text-emerald-400 block">
-                          +{formatCurrency(marginData.grossProfit)}
+                        <span className="text-[10px] text-slate-400 block">Margen Real Hoy</span>
+                        <span className="text-xs font-black text-emerald-400 block">
+                          +{formatCurrency(marginReal.realMarginToday)}
                         </span>
-                        <span className="text-[10px] text-slate-400">
-                          Coste: {formatCurrency(vehicle.total_cost)}
+                        <span className="text-[10px] text-amber-400 font-mono block">
+                          Campa: -{formatCurrency(marginReal.holdingLoss)}
                         </span>
                       </div>
                     </div>
@@ -446,7 +453,7 @@ export default function VehiclesPage() {
               <tbody className="divide-y divide-slate-800/60 text-slate-200">
                 {filteredVehicles.map((vehicle) => {
                   const statusBadge = getVehicleStatusBadge(vehicle.status);
-                  const marginData = calculateREBUMargin(vehicle.selling_price, vehicle.total_cost);
+                  const marginReal = calculateRealCurrentMargin(vehicle.selling_price, vehicle.total_cost, vehicle.days_in_stock);
 
                   return (
                     <tr key={vehicle.id} className="hover:bg-slate-800/40 transition-colors">
@@ -490,7 +497,10 @@ export default function VehiclesPage() {
                         {formatCurrency(vehicle.selling_price)}
                       </td>
                       <td className="py-3 px-3 font-bold text-emerald-400">
-                        +{formatCurrency(marginData.grossProfit)}
+                        +{formatCurrency(marginReal.realMarginToday)}
+                        <span className="block text-[9px] text-amber-400 font-mono">
+                          -{formatCurrency(marginReal.holdingLoss)}
+                        </span>
                       </td>
                       <td className="py-3 px-3 text-slate-400">{vehicle.days_in_stock} d</td>
                       <td className="py-3 px-4 text-right">
