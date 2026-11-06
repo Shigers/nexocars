@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -21,6 +21,12 @@ import {
   Plus,
   Sparkles,
   CheckCircle,
+  Wand2,
+  SlidersHorizontal,
+  RefreshCw,
+  Image as ImageIcon,
+  Check,
+  Eye,
 } from "lucide-react";
 import { mockVehicles, mockExpenses, mockPortals, mockLeads } from "@/lib/mock-data";
 import {
@@ -31,20 +37,63 @@ import {
   getFuelLabel,
   calculateREBUMargin,
 } from "@/lib/utils";
+import { getStoredVehicles } from "@/lib/storage";
+import { Vehicle } from "@/types";
 
 export default function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const vehicle = mockVehicles.find((v) => v.id === resolvedParams.id) || mockVehicles[0];
+  const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehicles);
+
+  useEffect(() => {
+    setVehicles(getStoredVehicles());
+  }, []);
+
+  const vehicle = vehicles.find((v) => v.id === resolvedParams.id) || vehicles[0] || mockVehicles[0];
 
   const [activeTab, setActiveTab] = useState<
     "general" | "fotos" | "gastos" | "publicaciones" | "leads" | "docs" | "historial"
   >("general");
 
   const [selectedPhoto, setSelectedPhoto] = useState(vehicle.images[0]);
+  const [studioProcessing, setStudioProcessing] = useState(false);
+  const [studioStatusText, setStudioStatusText] = useState("");
+  const [activeEnhancement, setActiveEnhancement] = useState<"none" | "scratch_removed" | "showroom" | "plate_cover">("none");
+  const [showOriginal, setShowOriginal] = useState(false);
+
   const vehicleExpenses = mockExpenses.filter((e) => e.vehicle_id === vehicle.id);
   const matchedLeads = mockLeads.filter((l) => l.vehicle_id === vehicle.id);
   const statusBadge = getVehicleStatusBadge(vehicle.status);
   const marginData = calculateREBUMargin(vehicle.selling_price, vehicle.total_cost);
+
+  const handleApplyAIEnhancement = (type: "scratch_removed" | "showroom" | "plate_cover") => {
+    setStudioProcessing(true);
+    setActiveEnhancement("none");
+
+    const steps = [
+      "Segmentando geometría del vehículo con red neuronal...",
+      type === "scratch_removed"
+        ? "Identificando rozaduras y picotazos en aletas / paragolpes..."
+        : type === "showroom"
+        ? "Eliminando fondo de calle y generando suelo pulido de concesionario..."
+        : "Reconociendo placa de matrícula y ajustando cubrematrículas corporativo...",
+      "Generando textura de pintura y reflejos de luz natural...",
+      "Optimizando nitidez y balance de blancos para portales...",
+    ];
+
+    let i = 0;
+    setStudioStatusText(steps[0]);
+
+    const interval = setInterval(() => {
+      i++;
+      if (i < steps.length) {
+        setStudioStatusText(steps[i]);
+      } else {
+        clearInterval(interval);
+        setStudioProcessing(false);
+        setActiveEnhancement(type);
+      }
+    }, 700);
+  };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -137,7 +186,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
       <div className="flex items-center gap-2 border-b border-slate-800 overflow-x-auto text-xs font-medium pb-px">
         {[
           { key: "general", label: "Información General", icon: Car },
-          { key: "fotos", label: `Fotografías (${vehicle.images.length})`, icon: Share2 },
+          { key: "fotos", label: `Fotografías & Estudio IA (${vehicle.images.length})`, icon: Wand2 },
           { key: "gastos", label: `Gastos & Margen (${vehicleExpenses.length})`, icon: Receipt },
           { key: "publicaciones", label: "Publicaciones Portales", icon: ExternalLink },
           { key: "leads", label: `Clientes Interesados (${matchedLeads.length})`, icon: Users },
@@ -167,7 +216,6 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
       {activeTab === "general" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            {/* Description */}
             <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
               <h3 className="text-sm font-bold text-white">Descripción Comercial</h3>
               <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">
@@ -175,7 +223,6 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
               </p>
             </div>
 
-            {/* Equipment */}
             <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
               <h3 className="text-sm font-bold text-white">Equipamiento Destacado</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -189,7 +236,6 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
-          {/* Right technical column */}
           <div className="space-y-6">
             <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
               <h3 className="text-sm font-bold text-white">Datos de Procedencia</h3>
@@ -218,28 +264,213 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* TAB CONTENT: Photographs */}
+      {/* TAB CONTENT: Photographs & AI Photo Studio */}
       {activeTab === "fotos" && (
         <div className="space-y-6">
-          <div className="relative aspect-[16/9] max-h-[460px] w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl">
-            <img src={selectedPhoto} alt={vehicle.title} className="w-full h-full object-cover" />
-            <div className="absolute top-4 left-4 px-3 py-1 rounded-lg bg-black/70 backdrop-blur-md text-white text-xs font-semibold">
-              Foto Principal de Portada
-            </div>
-          </div>
+          {/* Main Visualizer with Live AI Studio */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left 2 Cols: The High-Res Viewer */}
+            <div className="lg:col-span-2 space-y-3">
+              <div className="relative aspect-[16/10] w-full rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl group">
+                <img
+                  src={selectedPhoto}
+                  alt={vehicle.title}
+                  className={`w-full h-full object-cover transition-all duration-700 ${
+                    activeEnhancement === "showroom" && !showOriginal
+                      ? "brightness-105 contrast-105 saturate-110"
+                      : activeEnhancement === "scratch_removed" && !showOriginal
+                      ? "filter contrast-100"
+                      : ""
+                  }`}
+                />
 
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-            {vehicle.images.map((img, idx) => (
-              <button
-                key={idx}
-                onClick={() => setSelectedPhoto(img)}
-                className={`relative aspect-[16/10] rounded-xl overflow-hidden border-2 transition-all ${
-                  selectedPhoto === img ? "border-blue-500 scale-105" : "border-slate-800 opacity-70 hover:opacity-100"
-                }`}
-              >
-                <img src={img} alt={`Foto ${idx}`} className="w-full h-full object-cover" />
-              </button>
-            ))}
+                {/* AI Scratch Removal Hologram Indicator */}
+                {activeEnhancement === "scratch_removed" && !showOriginal && (
+                  <div className="absolute inset-0 pointer-events-none border-2 border-emerald-500/40 rounded-3xl flex items-center justify-center">
+                    <div className="absolute top-6 right-6 px-3 py-1.5 rounded-xl bg-emerald-950/90 border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-xl flex items-center gap-2 backdrop-blur-md">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Defectos & Rayones Eliminados por IA (Inpainting)</span>
+                    </div>
+
+                    <div className="absolute bottom-8 left-8 p-3 rounded-2xl bg-black/80 border border-emerald-500/30 text-white text-xs max-w-sm backdrop-blur-md">
+                      <p className="font-bold text-emerald-400 flex items-center gap-1.5">
+                        <Check className="w-4 h-4" />
+                        Pintura restaurada digitalmente
+                      </p>
+                      <p className="text-[11px] text-slate-300 mt-0.5">
+                        Lista para publicar en portales mientras el vehículo entra en cabina de pintura.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Showroom Virtual Mode Indicator */}
+                {activeEnhancement === "showroom" && !showOriginal && (
+                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div className="absolute top-6 right-6 px-3 py-1.5 rounded-xl bg-purple-950/90 border border-purple-500/40 text-purple-300 text-xs font-bold shadow-xl flex items-center gap-2 backdrop-blur-md">
+                      <Wand2 className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Fondo Showroom Orlando Cars / Loewe Cars</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Plate Cover Indicator */}
+                {activeEnhancement === "plate_cover" && !showOriginal && (
+                  <div className="absolute bottom-6 right-6 px-3 py-1.5 rounded-xl bg-blue-950/90 border border-blue-500/40 text-blue-300 text-xs font-bold shadow-xl flex items-center gap-2 backdrop-blur-md">
+                    <Car className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Cubrematrículas Corporativo Oficial Aplicado</span>
+                  </div>
+                )}
+
+                {/* Loading / Processing HUD Overlay */}
+                {studioProcessing && (
+                  <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-center space-y-4 p-6 text-center z-30">
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-full border-4 border-cyan-500/20 border-t-cyan-400 animate-spin"></div>
+                      <Wand2 className="w-6 h-6 text-cyan-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-white tracking-wide">
+                        Motor de Retoque Automotriz IA
+                      </p>
+                      <p className="text-xs text-cyan-300 font-mono animate-pulse">
+                        {studioStatusText}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Compare Button (Hold to see original) */}
+                {activeEnhancement !== "none" && !studioProcessing && (
+                  <button
+                    onMouseDown={() => setShowOriginal(true)}
+                    onMouseUp={() => setShowOriginal(false)}
+                    onTouchStart={() => setShowOriginal(true)}
+                    onTouchEnd={() => setShowOriginal(false)}
+                    className="absolute bottom-4 left-4 px-3 py-1.5 rounded-xl bg-black/80 hover:bg-black border border-white/20 text-white text-xs font-bold backdrop-blur-md transition-all flex items-center gap-1.5 shadow-2xl"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>{showOriginal ? "Mostrando Original con Daño" : "Mantén pulsado para comparar"}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Photos Grid Selector */}
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                {vehicle.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setSelectedPhoto(img);
+                      setActiveEnhancement("none");
+                    }}
+                    className={`relative aspect-[16/10] rounded-xl overflow-hidden border-2 transition-all ${
+                      selectedPhoto === img
+                        ? "border-blue-500 scale-105 shadow-lg shadow-blue-500/20"
+                        : "border-slate-800 opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <img src={img} alt={`Foto ${idx}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Column: AI Car Studio Control Panel */}
+            <div className="p-5 rounded-3xl bg-gradient-to-b from-slate-900 via-[#0a1120] to-slate-900 border border-slate-800 space-y-5 shadow-2xl">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Wand2 className="w-5 h-5 text-cyan-400" />
+                  <h3 className="text-sm font-bold text-white">Estudio Fotográfico IA</h3>
+                </div>
+                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  Optimiza fotos para portales antes de que el coche entre en taller. Retoca desperfectos y sustituye fondos al estilo Dealcar.
+                </p>
+              </div>
+
+              {/* Action 1: Remove Scratches & Defects */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-emerald-500/40 transition-all space-y-2 group">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
+                    1. Quitar Rayones & Defectos
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
+                    Inpainting IA
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Elimina rozaduras en paragolpes, pequeños arañazos o marcas de llaves en la carrocería si el coche se va a reparar en taller.
+                </p>
+                <button
+                  onClick={() => handleApplyAIEnhancement("scratch_removed")}
+                  disabled={studioProcessing}
+                  className="w-full mt-2 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Eliminar Defectos Estéticos</span>
+                </button>
+              </div>
+
+              {/* Action 2: Virtual Showroom Background */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-purple-500/40 transition-all space-y-2 group">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white group-hover:text-purple-400 transition-colors">
+                    2. Fondo Showroom de Lujo
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold">
+                    Estudio Virtual
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Sustituye la foto hecha en campa o calle por una sala de exposición limpia con suelo pulido y branding de Orlando Cars o Loewe Cars.
+                </p>
+                <button
+                  onClick={() => handleApplyAIEnhancement("showroom")}
+                  disabled={studioProcessing}
+                  className="w-full mt-2 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md shadow-purple-600/20 flex items-center justify-center gap-1.5"
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Generar Fondo de Showroom</span>
+                </button>
+              </div>
+
+              {/* Action 3: Corporate Plate Cover */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 hover:border-blue-500/40 transition-all space-y-2 group">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors">
+                    3. Cubrematrículas Oficial
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold">
+                    Branding
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Oculta la matrícula original y coloca la placa decorativa con el logotipo de la empresa para evitar duplicados en internet.
+                </p>
+                <button
+                  onClick={() => handleApplyAIEnhancement("plate_cover")}
+                  disabled={studioProcessing}
+                  className="w-full mt-2 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-1.5"
+                >
+                  <Car className="w-3.5 h-3.5" />
+                  <span>Aplicar Placa Orlando / Loewe</span>
+                </button>
+              </div>
+
+              {/* Save & Publish Enhanced Photo */}
+              {activeEnhancement !== "none" && (
+                <div className="pt-2 border-t border-slate-800">
+                  <button
+                    onClick={() =>
+                      alert("¡Fotografía mejorada guardada en el catálogo oficial de Coches.net, Wallapop y Web!")
+                    }
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-black text-xs shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02]"
+                  >
+                    Guardar Foto Mejorada para Portales
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -266,7 +497,6 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
-          {/* Expenses Table */}
           <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
             <div className="p-4 border-b border-slate-800 flex items-center justify-between">
               <h3 className="text-xs font-bold text-white uppercase tracking-wider">
