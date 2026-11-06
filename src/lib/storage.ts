@@ -2,6 +2,7 @@
 
 import { Vehicle, Lead, Expense, Appointment, PortalPublication } from "@/types";
 import { mockVehicles, mockLeads, mockExpenses, mockAppointments, mockPortals } from "./mock-data";
+import { supabase, isSupabaseConfigured } from "./supabase";
 
 const STORAGE_KEYS = {
   VEHICLES: "nexo_car_vehicles_v1",
@@ -12,11 +13,30 @@ const STORAGE_KEYS = {
   VEHICLE_PORTALS: "nexo_car_veh_portals_v1",
 };
 
+// Background Cloud Sync Trigger
+let hasFetchedFromSupabase = false;
+
 // ---------------------------------------------------------------------------
-// VEHICLES PERSISTENCE
+// VEHICLES PERSISTENCE (Hybrid Offline-First + PostgreSQL Cloud Sync)
 // ---------------------------------------------------------------------------
 export function getStoredVehicles(): Vehicle[] {
   if (typeof window === "undefined") return mockVehicles;
+
+  // Real-time Cloud Fetch from Supabase PostgreSQL
+  if (isSupabaseConfigured && supabase && !hasFetchedFromSupabase) {
+    hasFetchedFromSupabase = true;
+    supabase
+      .from("vehicles")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (!error && data && data.length > 0) {
+          localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(data));
+          window.dispatchEvent(new Event("nexo_storage_updated"));
+        }
+      });
+  }
+
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.VEHICLES);
     if (!raw) {
@@ -24,7 +44,6 @@ export function getStoredVehicles(): Vehicle[] {
       return mockVehicles;
     }
     const parsed: Vehicle[] = JSON.parse(raw);
-    // Merge any mock vehicles not in parsed list (e.g. freshly added real Orlando Cars stock)
     const missingMocks = mockVehicles.filter(
       (m) => !parsed.some((p) => p.id === m.id || p.plate === m.plate)
     );
@@ -55,6 +74,55 @@ export function saveVehicle(vehicle: Vehicle): Vehicle[] {
     localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(updated));
     window.dispatchEvent(new Event("nexo_storage_updated"));
   }
+
+  // Direct Cloud Write to PostgreSQL Supabase
+  if (isSupabaseConfigured && supabase) {
+    supabase
+      .from("vehicles")
+      .upsert({
+        id: vehicle.id,
+        company_id: vehicle.company_id || "comp-orlando",
+        brand: vehicle.brand,
+        model: vehicle.model,
+        version: vehicle.version,
+        plate: vehicle.plate,
+        vin: vehicle.vin,
+        year: vehicle.year,
+        mileage: vehicle.mileage,
+        fuel_type: vehicle.fuel_type,
+        transmission: vehicle.transmission,
+        power_hp: vehicle.power_hp,
+        color: vehicle.color,
+        doors: vehicle.doors || 5,
+        seats: vehicle.seats || 5,
+        environmental_badge: vehicle.environmental_badge,
+        body_type: vehicle.body_type,
+        purchase_price: vehicle.purchase_price,
+        preparation_costs: vehicle.preparation_costs,
+        additional_costs: vehicle.additional_costs,
+        total_cost: vehicle.total_cost,
+        selling_price: vehicle.selling_price,
+        financed_price: vehicle.financed_price,
+        min_selling_price: vehicle.min_selling_price,
+        tax_scheme: vehicle.tax_scheme || "REBU",
+        status: vehicle.status || "disponible",
+        location: vehicle.location,
+        purchase_date: vehicle.purchase_date,
+        supplier_name: vehicle.supplier_name,
+        title: vehicle.title,
+        description: vehicle.description,
+        images: vehicle.images,
+        equipment_list: vehicle.equipment_list,
+        is_featured: vehicle.is_featured,
+        published_on_web: vehicle.published_on_web,
+        days_in_stock: vehicle.days_in_stock,
+        created_at: vehicle.created_at || new Date().toISOString(),
+      })
+      .then(({ error }) => {
+        if (error) console.error("Cloud Supabase sync error:", error);
+      });
+  }
+
   return updated;
 }
 
@@ -65,6 +133,18 @@ export function deleteVehicle(id: string): Vehicle[] {
     localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(updated));
     window.dispatchEvent(new Event("nexo_storage_updated"));
   }
+
+  // Direct Cloud Delete in Supabase PostgreSQL
+  if (isSupabaseConfigured && supabase) {
+    supabase
+      .from("vehicles")
+      .delete()
+      .eq("id", id)
+      .then(({ error }) => {
+        if (error) console.error("Cloud Supabase delete error:", error);
+      });
+  }
+
   return updated;
 }
 
