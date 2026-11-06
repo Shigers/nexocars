@@ -6,10 +6,10 @@ import { Header } from "@/components/layout/header";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isStandalone = pathname?.startsWith("/catalog") || pathname?.startsWith("/tour");
+  const isStandalone = pathname?.startsWith("/catalog") || pathname?.startsWith("/tour") || pathname?.startsWith("/ops");
 
   if (isStandalone) {
-    return <div className="min-h-screen bg-[#070b13] w-full">{children}</div>;
+    return <div className="min-h-screen bg-[#040711] w-full">{children}</div>;
   }
 
   return (
