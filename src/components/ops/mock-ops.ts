@@ -2,6 +2,21 @@ import { BotStatus, OperationalLog, NetworkNode, SocialDraft, PendingIngestion }
 
 export const INITIAL_BOTS: BotStatus[] = [
   {
+    id: "agenda_bot",
+    name: "Nexo-Secretario (Agenda & Tareas)",
+    tagline: "Gestor de Rutinas Diarias, Correos & Recordatorios",
+    avatar: "📋",
+    role: "Cronograma Diario, Control de Correos y Avisos a Tiempo",
+    color: "from-amber-500 via-orange-600 to-red-500",
+    badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+    status: "ONLINE",
+    activeTasks: 4,
+    completedTasks: 118,
+    accuracyRate: "100%",
+    lastAction: "Planificando funciones de hoy: 6 tareas y 3 correos pendientes",
+    promptInstructions: "Organizar la jornada diaria de Shigeru en Orlando Cars y Loewe Car. Avisar 15 min antes de cada llamada o cita. Controlar los correos a gestoría y verificar tareas de taller."
+  },
+  {
     id: "chief",
     name: "Nexo-Chief",
     tagline: "Jefe Supervisor & Coordinador General",

@@ -33,7 +33,7 @@ export default function OpsCommandPage() {
     return INITIAL_BOTS;
   });
 
-  const [activeTab, setActiveTab] = useState<string>("chief");
+  const [activeTab, setActiveTab] = useState<string>("agenda");
   const [nodes, setNodes] = useState(INITIAL_NODES);
   const [drafts, setDrafts] = useState(INITIAL_DRAFTS);
   const [ingestions, setIngestions] = useState(INITIAL_INGESTIONS);

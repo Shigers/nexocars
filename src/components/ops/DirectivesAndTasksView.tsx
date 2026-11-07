@@ -45,32 +45,40 @@ export interface BotDirective {
   active: boolean;
 }
 
-const STORAGE_KEY_TASKS = "orlando_ops_tasks_v2";
-const STORAGE_KEY_DIRECTIVES = "orlando_ops_directives_v2";
+const STORAGE_KEY_TASKS = "orlando_ops_tasks_v3";
+const STORAGE_KEY_DIRECTIVES = "orlando_ops_directives_v3";
 
 const INITIAL_DIRECTIVES: BotDirective[] = [
   {
     id: "dir-1",
     botId: "chief",
     frequency: "Diario a las 09:00",
-    title: "Auditoría diaria de coches >45 días",
-    instruction: "Escanear el stock en Supabase. Si algún coche supera 45 días en patio, calcular precio de rebaja al 90 y preparar alerta.",
+    title: "Auditoría diaria de stock parado (>45 días en campa)",
+    instruction: "Escanear vehículos en Supabase. Si alguno supera 45 días sin venderse, calcular la rebaja psicológica al 90 y preparar notificación de liquidación urgente.",
     active: true,
   },
   {
     id: "dir-2",
     botId: "stock",
     frequency: "Cada 2 horas",
-    title: "Verificación de fotos y fichas técnicas",
-    instruction: "Comprobar si hay coches en estado 'disponible' con menos de 4 fotos y notificar al comercial encargado.",
+    title: "Verificación de fotos y especificaciones de stock",
+    instruction: "Comprobar que todos los coches en estado 'disponible' tengan al menos 6 fotos y equipamiento completo para los feeds de Coches.net.",
     active: true,
   },
   {
     id: "dir-3",
     botId: "social",
     frequency: "Diario a las 09:00",
-    title: "Borrador de Reel para el vehículo destacado del día",
-    instruction: "Seleccionar el coche con mejor relación calidad/precio y redactar copy para Instagram con gancho de venta y llamada a la acción.",
+    title: "Generación de borrador de Reel & Anuncio para el coche destacado",
+    instruction: "Seleccionar el coche con mejor margen neto del día y redactar un guion persuasivo con gancho para Instagram, TikTok y Wallapop.",
+    active: true,
+  },
+  {
+    id: "dir-4",
+    botId: "network",
+    frequency: "En tiempo real",
+    title: "Centinela de conectividad y sincronización Supabase",
+    instruction: "Monitorizar latencia de la base de datos cloud y verificar que los feeds XML respondan con código 200 en menos de 100ms.",
     active: true,
   },
 ];
@@ -78,47 +86,80 @@ const INITIAL_DIRECTIVES: BotDirective[] = [
 const INITIAL_TASKS: ScheduledTask[] = [
   {
     id: "task-01",
-    title: "Enviar correo a gestoría con contrato firmado de la Mercedes Vito",
+    title: "09:00 - Enviar correo a gestoría con contratos firmados y justificantes bancarios",
     type: "correo",
-    assignedTo: "Yo",
+    assignedTo: "Yo (Shigeru)",
     date: new Date().toISOString().split("T")[0],
-    time: "10:00",
+    time: "09:00",
     priority: "alta",
     completed: false,
-    notes: "Adjuntar DNI del comprador y justificante de transferencia bancaria.",
+    notes: "Documentación de la Mercedes Vito y DNI del comprador para tramitar cambio de titularidad DGT.",
   },
   {
     id: "task-02",
-    title: "Recordatorio: Llamar a cliente del Audi Q5 para confirmar prueba en Paterna",
+    title: "10:15 - Inspección matinal de patio y campa de Paterna",
+    type: "tarea",
+    assignedTo: "Yo (Shigeru)",
+    date: new Date().toISOString().split("T")[0],
+    time: "10:15",
+    priority: "media",
+    completed: false,
+    notes: "Revisar coches lavados, carteles de precios colocados y verificar si alguno cumple más de 45 días.",
+  },
+  {
+    id: "task-03",
+    title: "11:30 - Recordatorio: Llamar a cliente del Audi Q5 para concretar cita de prueba",
     type: "llamada",
-    assignedTo: "Yo",
+    assignedTo: "Yo (Shigeru)",
     date: new Date().toISOString().split("T")[0],
     time: "11:30",
     priority: "alta",
     completed: false,
-    notes: "Preguntarle si viene solo o con familiar para preparar el vehículo.",
+    notes: "Preguntarle si entrega coche como parte de pago para abrir tasador REBU.",
   },
   {
-    id: "task-03",
-    title: "Revisar coches en preparación de taller (pastillas de freno Seat León)",
+    id: "task-04",
+    title: "13:00 - Revisión de solicitudes de tasación de particulares en Wallapop",
     type: "tarea",
-    assignedTo: "Yo",
+    assignedTo: "Nexo-Chief",
+    date: new Date().toISOString().split("T")[0],
+    time: "13:00",
+    priority: "alta",
+    completed: false,
+    notes: "Pasar ofertas por la calculadora de tasación inversa REBU para no exceder el precio tope.",
+  },
+  {
+    id: "task-05",
+    title: "16:00 - Comprobar estado de taller (pastillas de freno del Seat León)",
+    type: "tarea",
+    assignedTo: "Yo (Shigeru)",
     date: new Date().toISOString().split("T")[0],
     time: "16:00",
     priority: "media",
     completed: false,
-    notes: "Verificar si ha llegado el recambio para poner en estado disponible.",
+    notes: "Si el mecánico termina la revisión y limpieza, cambiar estado a 'disponible' en el sistema.",
   },
   {
-    id: "task-04",
-    title: "Generar feed XML actualizado para Coches.net con nuevo stock",
+    id: "task-06",
+    title: "18:00 - Sincronizar feeds de stock con Coches.net y AutoScout24",
     type: "directriz_bot",
-    assignedTo: "Stock & Plataformas",
+    assignedTo: "Stock-Ingestor",
     date: new Date().toISOString().split("T")[0],
     time: "18:00",
     priority: "media",
-    completed: true,
-    botInstruction: "Verificar endpoint /api/feed/coches_net y refrescar cache.",
+    completed: false,
+    botInstruction: "Consumir endpoint /api/feed/coches_net y refrescar caché en la CDN de Vercel.",
+  },
+  {
+    id: "task-07",
+    title: "19:30 - Cierre de jornada: Balance de ventas y margen acumulado del día",
+    type: "recordatorio",
+    assignedTo: "Nexo-Chief",
+    date: new Date().toISOString().split("T")[0],
+    time: "19:30",
+    priority: "media",
+    completed: false,
+    notes: "Revisar leads atendidos, nuevos contratos y dejar programadas las funciones de mañana.",
   },
 ];
 
@@ -155,7 +196,7 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newType, setNewType] = useState<ScheduledTask["type"]>("tarea");
-  const [newAssignedTo, setNewAssignedTo] = useState("Yo");
+  const [newAssignedTo, setNewAssignedTo] = useState("Yo (Shigeru)");
   const [newTime, setNewTime] = useState("10:00");
   const [newPriority, setNewPriority] = useState<ScheduledTask["priority"]>("media");
   const [newNotes, setNewNotes] = useState("");
@@ -271,10 +312,10 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
     <div className="space-y-6">
       {/* Top Banner KPI */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-[#091024] border border-blue-500/30 flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-[#091024] border border-blue-500/30 flex items-center justify-between shadow-lg shadow-blue-950/20">
           <div>
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-              Tareas de Hoy
+              Funciones de Hoy
             </span>
             <span className="text-2xl font-black text-white mt-1 block">
               {pendingCount} <span className="text-xs font-normal text-slate-400">pendientes</span>
@@ -285,7 +326,7 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#091024] border border-emerald-500/30 flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-[#091024] border border-emerald-500/30 flex items-center justify-between shadow-lg shadow-emerald-950/20">
           <div>
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
               Completadas Hoy
@@ -299,7 +340,7 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#091024] border border-purple-500/30 flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-[#091024] border border-purple-500/30 flex items-center justify-between shadow-lg shadow-purple-950/20">
           <div>
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
               Directrices de Bots
@@ -313,7 +354,7 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#091024] border border-amber-500/30 flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-[#091024] border border-amber-500/30 flex items-center justify-between shadow-lg shadow-amber-950/20">
           <div>
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
               Fecha Seleccionada
@@ -337,7 +378,7 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <Bot className="w-4 h-4 text-purple-400" />
-                <h3 className="text-sm font-bold text-white">Directrices Fijas para Bots</h3>
+                <h3 className="text-sm font-bold text-white">Directrices Fijas de Bots</h3>
               </div>
               <button
                 onClick={() => setIsDirectiveModalOpen(true)}
@@ -409,13 +450,13 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <span>Agenda y Funciones por Día</span>
+                  <span>Cronograma y Funciones del Día</span>
                   <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono">
-                    {dayTasks.length} registradas
+                    {dayTasks.length} funciones
                   </span>
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Planificación diaria de llamadas, correos, gestoría y tareas para ti o tus bots.
+                  Planificación diaria de correos a gestoría, llamadas comerciales, taller y tareas de bots.
                 </p>
               </div>
 
@@ -432,7 +473,7 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition-all"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Programar Tarea</span>
+                  <span>Programar Función</span>
                 </button>
               </div>
             </div>
@@ -467,12 +508,12 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
               {filteredTasks.length === 0 ? (
                 <div className="text-center py-12 rounded-xl bg-[#060a16] border border-dashed border-slate-800">
                   <Calendar className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                  <p className="text-xs text-slate-400">No hay tareas programadas para este filtro o fecha.</p>
+                  <p className="text-xs text-slate-400">No hay funciones programadas para este filtro o fecha.</p>
                   <button
                     onClick={() => setIsTaskModalOpen(true)}
                     className="mt-3 text-xs text-blue-400 hover:underline font-semibold"
                   >
-                    + Programar la primera tarea
+                    + Programar la primera función
                   </button>
                 </div>
               ) : (
@@ -512,19 +553,19 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
                             </span>
 
                             {t.time && (
-                              <span className="text-[11px] font-mono text-amber-300 flex items-center gap-1">
+                              <span className="text-[11px] font-mono text-amber-300 flex items-center gap-1 font-bold">
                                 <Clock className="w-3 h-3" />
                                 {t.time}
                               </span>
                             )}
 
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">
-                              Asignado: {t.assignedTo}
+                              {t.assignedTo}
                             </span>
 
                             {t.priority === "alta" && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">
-                                URGENTE
+                                PRIORIDAD ALTA
                               </span>
                             )}
                           </div>
@@ -555,7 +596,7 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
                       <button
                         onClick={() => handleDeleteTask(t.id)}
                         className="text-slate-500 hover:text-rose-400 p-1 transition-colors"
-                        title="Eliminar tarea"
+                        title="Eliminar función"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -568,14 +609,14 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
         </div>
       </div>
 
-      {/* MODAL: NUEVA TAREA / CORREO / RECORDATORIO */}
+      {/* MODAL: NUEVA FUNCIÓN / TAREA / CORREO */}
       {isTaskModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="w-full max-w-lg bg-[#091024] border border-blue-500/40 rounded-2xl shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-blue-400" />
-                <span>Programar Tarea, Correo o Recordatorio</span>
+                <span>Programar Nueva Función Diaria</span>
               </h3>
               <button
                 onClick={() => setIsTaskModalOpen(false)}
@@ -588,7 +629,7 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
             <form onSubmit={handleCreateTask} className="space-y-3.5">
               <div>
                 <label className="text-[11px] font-semibold text-slate-300 block mb-1">
-                  Título de la tarea o función *
+                  Título de la función o tarea *
                 </label>
                 <input
                   type="text"
@@ -627,10 +668,10 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
                     onChange={e => setNewAssignedTo(e.target.value)}
                     className="w-full bg-[#0c142c] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                   >
-                    <option value="Yo">👤 Yo (Responsable)</option>
+                    <option value="Yo (Shigeru)">👤 Yo (Shigeru)</option>
                     <option value="Nexo-Chief">👔 Nexo-Chief (Supervisor)</option>
-                    <option value="Stock & Plataformas">🚗 Stock & Plataformas</option>
-                    <option value="Redes & Reels">📱 Redes & Reels</option>
+                    <option value="Stock-Ingestor">🚗 Stock-Ingestor</option>
+                    <option value="Social-Copilot">📱 Social-Copilot</option>
                     <option value="Comercial Paterna">🤝 Comercial Paterna</option>
                   </select>
                 </div>
@@ -690,7 +731,7 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
                   type="submit"
                   className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-lg shadow-blue-600/30"
                 >
-                  Guardar Tarea
+                  Guardar Función
                 </button>
               </div>
             </form>
@@ -726,9 +767,9 @@ export function DirectivesAndTasksView({ bots }: { bots: BotStatus[] }) {
                   className="w-full bg-[#0c142c] border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
                 >
                   <option value="chief">👔 Nexo-Chief (Supervisor)</option>
-                  <option value="stock">🚗 Stock & Plataformas</option>
-                  <option value="social">📱 Redes & Reels</option>
-                  <option value="network">📡 Red LAN & Sistemas</option>
+                  <option value="stock">🚗 Stock-Ingestor (Plataformas)</option>
+                  <option value="social">📱 Social-Copilot (Redes)</option>
+                  <option value="network">📡 Net-Sentinel (Sistemas)</option>
                 </select>
               </div>
 
