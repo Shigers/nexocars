@@ -8,6 +8,7 @@ import { StockBotView } from "@/components/ops/StockBotView";
 import { SocialBotView } from "@/components/ops/SocialBotView";
 import { NetworkBotView } from "@/components/ops/NetworkBotView";
 import { CustomBotView } from "@/components/ops/CustomBotView";
+import { DirectivesAndTasksView } from "@/components/ops/DirectivesAndTasksView";
 import { 
   INITIAL_BOTS, 
   INITIAL_NODES, 
@@ -122,6 +123,18 @@ export default function OpsCommandPage() {
             
             {/* Native 4 Bots */}
             <button
+              onClick={() => setActiveTab("agenda")}
+              className={`flex items-center gap-2 py-2.5 px-3.5 rounded-xl font-bold whitespace-nowrap transition-all ${
+                activeTab === "agenda"
+                  ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-900/30"
+                  : "text-slate-400 hover:text-white hover:bg-[#0a1228]"
+              }`}
+            >
+              <span>📅</span>
+              <span>Directrices & Agenda Diaria</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab("chief")}
               className={`flex items-center gap-2 py-2.5 px-3.5 rounded-xl font-bold whitespace-nowrap transition-all ${
                 activeTab === "chief"
@@ -210,6 +223,10 @@ export default function OpsCommandPage() {
 
         {/* Tab Content View */}
         <div className="transition-all duration-200">
+          {activeTab === "agenda" && (
+            <DirectivesAndTasksView bots={bots} />
+          )}
+
           {activeTab === "chief" && (
             <ChiefSupervisorView
               bots={bots}
