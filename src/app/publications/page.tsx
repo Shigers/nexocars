@@ -512,63 +512,63 @@ export default function PublicationsPage() {
             </p>
 
             <div className="space-y-3 pt-1">
-              {/* Feed 1: XML */}
+              {/* Feed 1: XML Coches.net */}
               <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    Feed XML Estándar Automotriz (Coches.net / Ganvam / Autocasión)
+                    Feed XML Coches.net / Ganvam / Autocasión
                   </span>
                   <button
-                    onClick={() => handleCopyLink("https://nexo-car.vercel.app/api/feeds/stock.xml", "xml")}
+                    onClick={() => handleCopyLink("https://nexocars.vercel.app/api/feed/coches_net", "xml")}
                     className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-semibold"
                   >
                     {copiedFeed === "xml" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedFeed === "xml" ? "Copiado" : "Copiar"}</span>
+                    <span>{copiedFeed === "xml" ? "Copiado" : "Copiar Feed Coches.net"}</span>
                   </button>
                 </div>
                 <code className="block p-2 rounded-lg bg-slate-900 text-purple-300 font-mono text-[11px] truncate">
-                  https://nexo-car.vercel.app/api/feeds/stock.xml
+                  https://nexocars.vercel.app/api/feed/coches_net
                 </code>
               </div>
 
-              {/* Feed 2: JSON API */}
+              {/* Feed 2: XML AutoScout24 */}
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                    Feed XML AutoScout24 Europeo
+                  </span>
+                  <button
+                    onClick={() => handleCopyLink("https://nexocars.vercel.app/api/feed/autoscout24", "autoscout")}
+                    className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-semibold"
+                  >
+                    {copiedFeed === "autoscout" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedFeed === "autoscout" ? "Copiado" : "Copiar Feed AutoScout24"}</span>
+                  </button>
+                </div>
+                <code className="block p-2 rounded-lg bg-slate-900 text-amber-300 font-mono text-[11px] truncate">
+                  https://nexocars.vercel.app/api/feed/autoscout24
+                </code>
+              </div>
+
+              {/* Feed 3: JSON API Catálogo Público */}
               <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-                    API REST JSON en Tiempo Real (Web Propia / Apps)
+                    API REST JSON Catálogo Público (Web Oficial / Apps)
                   </span>
                   <button
-                    onClick={() => handleCopyLink("https://nexo-car.vercel.app/api/feeds/stock.json", "json")}
+                    onClick={() => handleCopyLink("https://nexocars.vercel.app/api/catalogo", "json")}
                     className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-semibold"
                   >
                     {copiedFeed === "json" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedFeed === "json" ? "Copiado" : "Copiar"}</span>
+                    <span>{copiedFeed === "json" ? "Copiado" : "Copiar JSON API"}</span>
                   </button>
                 </div>
                 <code className="block p-2 rounded-lg bg-slate-900 text-blue-300 font-mono text-[11px] truncate">
-                  https://nexo-car.vercel.app/api/feeds/stock.json
-                </code>
-              </div>
-
-              {/* Feed 3: Meta Facebook Catalog */}
-              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-                    Meta Automotive Inventory Ads (Facebook / Instagram)
-                  </span>
-                  <button
-                    onClick={() => handleCopyLink("https://nexo-car.vercel.app/api/feeds/meta-automotive.csv", "meta")}
-                    className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-semibold"
-                  >
-                    {copiedFeed === "meta" ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedFeed === "meta" ? "Copiado" : "Copiar"}</span>
-                  </button>
-                </div>
-                <code className="block p-2 rounded-lg bg-slate-900 text-cyan-300 font-mono text-[11px] truncate">
-                  https://nexo-car.vercel.app/api/feeds/meta-automotive.csv
+                  https://nexocars.vercel.app/api/catalogo
                 </code>
               </div>
             </div>

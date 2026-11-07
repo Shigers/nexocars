@@ -33,6 +33,7 @@ import {
   calculateREBUMargin,
   calculateRealCurrentMargin,
 } from "@/lib/utils";
+import { vehicleMargin, urgencyReport } from "@/lib/finance";
 import { getStoredVehicles, bulkImportVehicles, deleteVehicle, saveVehicle } from "@/lib/storage";
 
 export default function VehiclesPage() {
@@ -317,7 +318,21 @@ export default function VehiclesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredVehicles.map((vehicle) => {
             const statusBadge = getVehicleStatusBadge(vehicle.status);
-            const marginReal = calculateRealCurrentMargin(vehicle.selling_price, vehicle.total_cost, vehicle.days_in_stock);
+            const fin = vehicleMargin({
+              regime: vehicle.tax_scheme || "REBU",
+              salePrice: vehicle.selling_price,
+              purchasePrice: vehicle.purchase_price,
+              expenses: (vehicle.preparation_costs || 0) + (vehicle.additional_costs || 0),
+              days: vehicle.days_in_stock,
+              holdingPerDay: 8,
+            });
+            const urgency = urgencyReport(
+              vehicle.days_in_stock,
+              fin.currentMargin,
+              fin.initialMargin,
+              vehicle.status,
+              vehicle.selling_price
+            );
 
             return (
               <div
@@ -339,11 +354,16 @@ export default function VehiclesPage() {
                       <span className="px-2.5 py-1 rounded-md bg-white text-slate-950 font-mono text-[11px] font-black tracking-wider border border-slate-300 shadow-md">
                         {vehicle.plate}
                       </span>
-                      <span
-                        className={`text-[10px] px-2.5 py-1 rounded-full border font-semibold backdrop-blur-md ${statusBadge.className}`}
-                      >
-                        {statusBadge.label}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold backdrop-blur-md ${urgency.badgeColor}`}>
+                          {urgency.badgeLabel}
+                        </span>
+                        <span
+                          className={`text-[10px] px-2.5 py-1 rounded-full border font-semibold backdrop-blur-md ${statusBadge.className}`}
+                        >
+                          {statusBadge.label}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Environmental Badge & Days in Stock */}
@@ -362,7 +382,7 @@ export default function VehiclesPage() {
                     <div>
                       <div className="flex items-center justify-between text-[11px] text-slate-400 mb-0.5">
                         <span className="font-medium text-blue-400">{vehicle.brand}</span>
-                        <span>{vehicle.location}</span>
+                        <span className="font-mono text-purple-300">{vehicle.tax_scheme || "REBU"}</span>
                       </div>
                       <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1">
                         {vehicle.model} {vehicle.version}
@@ -388,23 +408,27 @@ export default function VehiclesPage() {
                     {/* Financial & Margin Overview */}
                     <div className="flex items-end justify-between pt-1">
                       <div>
-                        <span className="text-[10px] text-slate-400 block">Precio Venta (Contado)</span>
+                        <span className="text-[10px] text-slate-400 block">PVP Venta</span>
                         <div className="text-lg font-black text-white">
                           {formatCurrency(vehicle.selling_price)}
                         </div>
-                        {vehicle.financed_price && (
-                          <span className="text-[10px] text-blue-400 font-semibold block">
-                            Financiado: {formatCurrency(vehicle.financed_price)}
+                        {urgency.suggestedMarkdown ? (
+                          <span className="text-[10px] text-amber-300 font-semibold block animate-pulse">
+                            Rebaja sugerida: {formatCurrency(urgency.suggestedMarkdown)}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-500 block">
+                            IVA {vehicle.tax_scheme || "REBU"}: {formatCurrency(fin.vat)}
                           </span>
                         )}
                       </div>
                       <div className="text-right">
-                        <span className="text-[10px] text-slate-400 block">Margen Real Hoy</span>
-                        <span className="text-xs font-black text-emerald-400 block">
-                          +{formatCurrency(marginReal.realMarginToday)}
+                        <span className="text-[10px] text-slate-400 block">Margen Neto Hoy</span>
+                        <span className={`text-xs font-black block ${fin.isLoss ? "text-rose-400" : "text-emerald-400"}`}>
+                          {fin.currentMargin >= 0 ? "+" : ""}{formatCurrency(fin.currentMargin)}
                         </span>
-                        <span className="text-[10px] text-amber-400 font-mono block">
-                          Campa: -{formatCurrency(marginReal.holdingLoss)}
+                        <span className="text-[10px] text-slate-500 font-mono block">
+                          Campa: -{formatCurrency(fin.holdingCost)}
                         </span>
                       </div>
                     </div>
