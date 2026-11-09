@@ -10,10 +10,10 @@
   --card-border: #e2e8f0;
   --border: #e2e8f0;
   
-  --sidebar: #090d16;
-  --sidebar-foreground: #f1f5f9;
-  --sidebar-border: #1e293b;
-  --sidebar-active: #1d4ed8;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-active: #2563eb;
 }
 
 .dark {
@@ -62,4 +62,240 @@ body {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* =========================================================================
+   NEXO-CAR LIGHT MODE PALETTE (when .dark class is removed or .light added)
+   ========================================================================= */
+
+html:not(.dark),
+html.light {
+  color-scheme: light;
+}
+
+html:not(.dark) body,
+html.light body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Base Surfaces & Layout Wrappers */
+html:not(.dark) .bg-\[\#070b13\],
+html.light .bg-\[\#070b13\] {
+  background-color: #f1f5f9 !important;
+}
+
+html:not(.dark) .bg-\[\#090d14\],
+html.light .bg-\[\#090d14\] {
+  background-color: #f8fafc !important;
+}
+
+html:not(.dark) .bg-\[\#040711\],
+html.light .bg-\[\#040711\] {
+  background-color: #f8fafc !important;
+}
+
+html:not(.dark) .bg-\[\#0d1627\],
+html.light .bg-\[\#0d1627\] {
+  background-color: #ffffff !important;
+}
+
+/* Header & Aside in light mode */
+html:not(.dark) header,
+html.light header {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) aside,
+html.light aside {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Cards, Modules, Modals, Panels and Popups */
+html:not(.dark) .bg-slate-900,
+html.light .bg-slate-900,
+html:not(.dark) .bg-slate-900\/90,
+html.light .bg-slate-900\/90,
+html:not(.dark) .bg-slate-900\/80,
+html.light .bg-slate-900\/80,
+html:not(.dark) .bg-slate-900\/70,
+html.light .bg-slate-900\/70,
+html:not(.dark) .bg-slate-900\/60,
+html.light .bg-slate-900\/60,
+html:not(.dark) .bg-slate-900\/50,
+html.light .bg-slate-900\/50 {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+/* Inner card wells, KPI stat pills, subtle panels */
+html:not(.dark) .bg-slate-950,
+html.light .bg-slate-950,
+html:not(.dark) .bg-slate-950\/80,
+html.light .bg-slate-950\/80,
+html:not(.dark) .bg-slate-950\/60,
+html.light .bg-slate-950\/60,
+html:not(.dark) .bg-slate-950\/40,
+html.light .bg-slate-950\/40,
+html:not(.dark) .bg-slate-950\/50,
+html.light .bg-slate-950\/50 {
+  background-color: #f1f5f9 !important;
+}
+
+/* Borders */
+html:not(.dark) .border-slate-800,
+html.light .border-slate-800,
+html:not(.dark) .border-slate-800\/80,
+html.light .border-slate-800\/80,
+html:not(.dark) .border-slate-800\/60,
+html.light .border-slate-800\/60,
+html:not(.dark) .border-slate-800\/50,
+html.light .border-slate-800\/50,
+html:not(.dark) .border-slate-700,
+html.light .border-slate-700 {
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) .divide-slate-800,
+html.light .divide-slate-800,
+html:not(.dark) .divide-slate-800\/80,
+html.light .divide-slate-800\/80,
+html:not(.dark) .divide-slate-800\/60,
+html.light .divide-slate-800\/60 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Hovers */
+html:not(.dark) .hover\:bg-slate-800:hover,
+html.light .hover\:bg-slate-800:hover,
+html:not(.dark) .hover\:bg-slate-800\/80:hover,
+html.light .hover\:bg-slate-800\/80:hover,
+html:not(.dark) .hover\:bg-slate-900\/60:hover,
+html.light .hover\:bg-slate-900\/60:hover {
+  background-color: #f1f5f9 !important;
+}
+
+html:not(.dark) .hover\:border-slate-700:hover,
+html.light .hover\:border-slate-700:hover {
+  border-color: #cbd5e1 !important;
+}
+
+/* Dark Gradients mapped to clean light gradients */
+html:not(.dark) .from-slate-900,
+html.light .from-slate-900 {
+  --tw-gradient-from: #ffffff !important;
+}
+html:not(.dark) .via-\[\#0d1627\],
+html.light .via-\[\#0d1627\] {
+  --tw-gradient-stops: var(--tw-gradient-from), #f8fafc, var(--tw-gradient-to) !important;
+}
+html:not(.dark) .to-slate-900,
+html.light .to-slate-900,
+html:not(.dark) .to-\[\#0c1424\],
+html.light .to-\[\#0c1424\] {
+  --tw-gradient-to: #f1f5f9 !important;
+}
+
+/* Typography & Titles */
+html:not(.dark) .text-slate-100,
+html.light .text-slate-100,
+html:not(.dark) .text-slate-200,
+html.light .text-slate-200,
+html:not(.dark) h1.text-white,
+html.light h1.text-white,
+html:not(.dark) h2.text-white,
+html.light h2.text-white,
+html:not(.dark) h3.text-white,
+html.light h3.text-white,
+html:not(.dark) h4.text-white,
+html.light h4.text-white,
+html:not(.dark) p.text-white,
+html.light p.text-white,
+html:not(.dark) div.text-white:not([class*="bg-"]):not([class*="from-"]),
+html.light div.text-white:not([class*="bg-"]):not([class*="from-"]),
+html:not(.dark) span.text-white:not([class*="bg-"]):not([class*="from-"]):not([class*="badge"]),
+html.light span.text-white:not([class*="bg-"]):not([class*="from-"]):not([class*="badge"]) {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .text-slate-300,
+html.light .text-slate-300 {
+  color: #334155 !important;
+}
+
+html:not(.dark) .text-slate-400,
+html.light .text-slate-400 {
+  color: #64748b !important;
+}
+
+html:not(.dark) .text-slate-500,
+html.light .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* Maintain crisp white text on colored buttons and primary CTA gradients */
+html:not(.dark) button[class*="bg-blue"],
+html.light button[class*="bg-blue"],
+html:not(.dark) a[class*="bg-blue"],
+html.light a[class*="bg-blue"],
+html:not(.dark) button[class*="bg-gradient"],
+html.light button[class*="bg-gradient"],
+html:not(.dark) a[class*="bg-gradient"],
+html.light a[class*="bg-gradient"],
+html:not(.dark) span[class*="bg-blue-600"],
+html.light span[class*="bg-blue-600"],
+html:not(.dark) span[class*="bg-emerald-600"],
+html.light span[class*="bg-emerald-600"],
+html:not(.dark) span[class*="bg-purple-600"],
+html.light span[class*="bg-purple-600"],
+html:not(.dark) span[class*="bg-red-600"],
+html.light span[class*="bg-red-600"],
+html:not(.dark) span[class*="bg-amber-600"],
+html.light span[class*="bg-amber-600"] {
+  color: #ffffff !important;
+}
+
+/* Form inputs, selects & textareas */
+html:not(.dark) input:not([type="checkbox"]):not([type="radio"]),
+html.light input:not([type="checkbox"]):not([type="radio"]),
+html:not(.dark) select,
+html.light select,
+html:not(.dark) textarea,
+html.light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html:not(.dark) input::placeholder,
+html.light input::placeholder,
+html:not(.dark) textarea::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Tables */
+html:not(.dark) table tr:hover,
+html.light table tr:hover {
+  background-color: #f8fafc !important;
+}
+
+/* Glassmorphism utility in light mode */
+html:not(.dark) .glass-panel,
+html.light .glass-panel {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Scrollbar in light mode */
+html:not(.dark) ::-webkit-scrollbar-thumb,
+html.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+html:not(.dark) ::-webkit-scrollbar-thumb:hover,
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

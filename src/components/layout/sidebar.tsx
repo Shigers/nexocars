@@ -74,10 +74,10 @@ export function Sidebar() {
     <aside
       className={`${
         collapsed ? "w-[72px]" : "w-64"
-      } bg-[#070b13] border-r border-slate-800/80 flex flex-col h-screen sticky top-0 z-30 select-none transition-all duration-200 ease-in-out`}
+      } bg-white dark:bg-[#070b13] border-r border-slate-200 dark:border-slate-800/80 flex flex-col h-screen sticky top-0 z-30 select-none transition-all duration-200 ease-in-out shadow-sm dark:shadow-none`}
     >
       {/* Brand Header */}
-      <div className="p-3 border-b border-slate-800/80">
+      <div className="p-3 border-b border-slate-200 dark:border-slate-800/80">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-700 via-indigo-900 to-slate-950 border border-blue-500/40 flex items-center justify-center p-1.5 shadow-lg shadow-blue-900/30 flex-shrink-0">
@@ -92,10 +92,10 @@ export function Sidebar() {
             {!collapsed && (
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-black text-base tracking-tight text-white">NEXO<span className="text-cyan-400">CAR</span></span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold border border-blue-500/30">PRO</span>
+                  <span className="font-black text-base tracking-tight text-slate-900 dark:text-white">NEXO<span className="text-cyan-600 dark:text-cyan-400">CAR</span></span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 font-semibold border border-blue-500/30">PRO</span>
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium truncate">Orlando Cars &amp; Loewe</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">Orlando Cars &amp; Loewe</span>
               </div>
             )}
           </div>
@@ -103,7 +103,7 @@ export function Sidebar() {
           {/* Collapse / Expand Toggle Button */}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all flex-shrink-0"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-slate-800/80 transition-all flex-shrink-0"
             title={collapsed ? "Expandir menú lateral" : "Plegar menú para ganar pantalla"}
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -115,13 +115,13 @@ export function Sidebar() {
           <div className="mt-3 relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all text-left text-xs"
+              className="w-full flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all text-left text-xs"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <Building2 className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-200 truncate">{currentCompany}</p>
-                  <p className="text-[10px] text-slate-400 truncate">
+                  <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">{currentCompany}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                     {currentCompany === "Orlando Cars" ? "Grupo Orlando" : "División Alta Gama"}
                   </p>
                 </div>
@@ -130,7 +130,7 @@ export function Sidebar() {
             </button>
 
             {dropdownOpen && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 rounded-lg bg-slate-900 border border-slate-800 shadow-2xl py-1 z-50">
+              <div className="absolute left-0 right-0 top-full mt-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl py-1 z-50">
                 <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
                   Cambiar Concesionario
                 </div>
@@ -141,15 +141,15 @@ export function Sidebar() {
                       setCurrentCompany(c.name);
                       setDropdownOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-800/80 transition-colors ${
-                      currentCompany === c.name ? "bg-blue-600/15 text-blue-400" : "text-slate-300"
+                    className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors ${
+                      currentCompany === c.name ? "bg-blue-50 dark:bg-blue-600/15 text-blue-600 dark:text-blue-400 font-semibold" : "text-slate-700 dark:text-slate-300"
                     }`}
                   >
                     <div>
                       <p className="text-xs font-medium">{c.name}</p>
                       <p className="text-[10px] text-slate-400">{c.label}</p>
                     </div>
-                    {currentCompany === c.name && <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />}
+                    {currentCompany === c.name && <ShieldCheck className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />}
                   </button>
                 ))}
               </div>
@@ -163,7 +163,7 @@ export function Sidebar() {
                 setCurrentCompany(next);
               }}
               title={`Activo: ${currentCompany}. Clic para alternar.`}
-              className="w-10 h-8 rounded-lg bg-blue-600/20 border border-blue-500/40 text-blue-400 font-bold text-[10px] flex items-center justify-center hover:bg-blue-600/30 transition-colors"
+              className="w-10 h-8 rounded-lg bg-blue-500/10 dark:bg-blue-600/20 border border-blue-500/30 dark:border-blue-500/40 text-blue-600 dark:text-blue-400 font-bold text-[10px] flex items-center justify-center hover:bg-blue-500/20 dark:hover:bg-blue-600/30 transition-colors"
             >
               {currentCompany === "Orlando Cars" ? "OC" : "LC"}
             </button>
@@ -186,14 +186,14 @@ export function Sidebar() {
                 collapsed ? "justify-center p-2.5" : "justify-between px-3 py-2.5"
               } rounded-lg text-xs font-medium transition-all group ${
                 isActive
-                  ? "bg-gradient-to-r from-blue-600/20 to-blue-500/10 text-white font-semibold border-l-2 border-blue-500"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+                  ? "bg-blue-50 dark:bg-gradient-to-r dark:from-blue-600/20 dark:to-blue-500/10 text-blue-600 dark:text-white font-semibold border-l-2 border-blue-500"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-900/60"
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <Icon
                   className={`w-4 h-4 flex-shrink-0 transition-colors ${
-                    isActive ? "text-blue-400" : "text-slate-400 group-hover:text-slate-300"
+                    isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300"
                   }`}
                 />
                 {!collapsed && <span className="truncate">{item.name}</span>}
@@ -201,7 +201,7 @@ export function Sidebar() {
               {!collapsed && item.badge && (
                 <span
                   className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
-                    item.badgeColor || "bg-slate-800 text-slate-300"
+                    item.badgeColor || "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                   }`}
                 >
                   {item.badge}
@@ -214,25 +214,25 @@ export function Sidebar() {
 
       {/* Live AI Status Pill */}
       {!collapsed ? (
-        <div className="p-3 border-t border-slate-800/80">
-          <div className="p-3 rounded-xl bg-gradient-to-b from-slate-900 to-[#0c1424] border border-blue-900/30">
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800/80">
+          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 dark:bg-gradient-to-b dark:from-slate-900 dark:to-[#0c1424] dark:border-blue-900/30">
             <div className="flex items-center gap-2 mb-1.5">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="text-[11px] font-semibold text-slate-200 flex items-center gap-1">
+              <span className="text-[11px] font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
                 Copiloto Automotriz
-                <Sparkles className="w-3 h-3 text-purple-400" />
+                <Sparkles className="w-3 h-3 text-purple-600 dark:text-purple-400" />
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 leading-relaxed">
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
               6 vehículos analizados. 1 alerta de stock parado (&gt;40 días).
             </p>
           </div>
         </div>
       ) : (
-        <div className="p-2 border-t border-slate-800/80 flex justify-center">
+        <div className="p-2 border-t border-slate-200 dark:border-slate-800/80 flex justify-center">
           <span className="relative flex h-3 w-3" title="Copiloto Activo">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>

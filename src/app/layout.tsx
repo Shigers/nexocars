@@ -32,8 +32,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="dark">
-      <body className="min-h-screen bg-[#070b13] text-slate-100 flex overflow-x-hidden">
+    <html lang="es" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function() {
+              try {
+                var theme = localStorage.getItem('nexocar_theme');
+                if (theme === 'light') {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                } else {
+                  document.documentElement.classList.add('dark');
+                  document.documentElement.classList.remove('light');
+                }
+              } catch(e) {}
+            })();`,
+          }}
+        />
+      </head>
+      <body className="min-h-screen bg-slate-50 dark:bg-[#070b13] text-slate-900 dark:text-slate-100 flex overflow-x-hidden transition-colors duration-200">
         <SplashScreen />
         <AppShell>{children}</AppShell>
       </body>
