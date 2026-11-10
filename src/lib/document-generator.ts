@@ -1,7 +1,16 @@
 // Generador oficial de documentos y facturación para NexoCar (Orlando Cars & Loewe Cars)
 
+export type DocumentType = 
+  | "factura" 
+  | "contrato" 
+  | "reserva" 
+  | "entrega" 
+  | "mandato_dgt" 
+  | "garantia" 
+  | "notificacion_dgt";
+
 export interface DocumentData {
-  type: "factura" | "contrato" | "reserva" | "entrega" | "mandato_dgt";
+  type: DocumentType;
   invoiceNumber?: string;
   date?: string;
   companyName?: string;
@@ -43,12 +52,12 @@ export function generateDocumentHtml(data: DocumentData): string {
   const dateFormatted = data.date || new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" });
   const invoiceNum = data.invoiceNumber || `FAC-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
 
-  // Cálculo REBU o General
   const isRebu = (data.taxScheme || "REBU") === "REBU";
   const total = data.sellingPrice || 0;
   const taxBase = data.taxBase || (isRebu ? total * 0.15 : total / 1.21);
   const taxAmount = data.taxAmount || (isRebu ? taxBase * 0.21 : total - taxBase);
 
+  // 1. FACTURA DE VENTA
   if (data.type === "factura") {
     return `
       <div class="header">
@@ -152,12 +161,13 @@ export function generateDocumentHtml(data: DocumentData): string {
       </div>
 
       <div class="footer">
-        Documento generado electrónicamente por el sistema de gestión ERP NexoCar para Orlando Cars & Loewe Cars.<br>
+        Documento generado electrónicamente por el sistema ERP NexoCar para Orlando Cars & Loewe Cars.<br>
         Inscrita en el Registro Mercantil de Madrid. Todos los derechos reservados.
       </div>
     `;
   }
 
+  // 2. CONTRATO DE COMPRAVENTA VO
   if (data.type === "contrato") {
     return `
       <div class="header">
@@ -243,6 +253,7 @@ export function generateDocumentHtml(data: DocumentData): string {
     `;
   }
 
+  // 3. DOCUMENTO DE RESERVA Y ARRAS
   if (data.type === "reserva") {
     const deposit = data.depositAmount || 500;
     const remaining = total - deposit;
@@ -284,12 +295,12 @@ export function generateDocumentHtml(data: DocumentData): string {
       </div>
 
       <div class="section">
-        <div class="section-title">CONDICIONES DE LA RESERVA</div>
+        <div class="section-title">CONDICIONES DE LA RESERVA (ARRAS PENITENCIALES)</div>
         <p class="clause-p">
-          1. El cliente entrega en concepto de <strong>SEÑAL Y RESERVA</strong> la cantidad de <strong>${deposit.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</strong>, comprometiéndose el concesionario a retirar el vehículo de la venta en todos los portales y mantenerlo reservado durante un plazo improrrogable de <strong>15 días naturales</strong>.
+          1. El cliente entrega en concepto de <strong>SEÑAL Y RESERVA</strong> la cantidad de <strong>${deposit.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</strong>, comprometiéndose el concesionario a retirar el vehículo de la venta en todos los portales y mantenerlo reservado durante un plazo de <strong>15 días naturales</strong>.
         </p>
         <p class="clause-p">
-          2. La cantidad restante de <strong>${remaining.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</strong> será liquidada íntegramente por el comprador con anterioridad o en el momento de la firma del contrato definitivo y entrega del vehículo.
+          2. La cantidad restante de <strong>${remaining.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</strong> será liquidada íntegramente por el comprador en el momento de la firma del contrato definitivo y entrega.
         </p>
         <p class="clause-p">
           3. Las partes pactan expresamente que las arras entregadas tienen la consideración de arras penitenciales conforme al <strong>artículo 1454 del Código Civil</strong> español.
@@ -315,6 +326,7 @@ export function generateDocumentHtml(data: DocumentData): string {
     `;
   }
 
+  // 4. ACTA DE ENTREGA
   if (data.type === "entrega") {
     return `
       <div class="header">
@@ -326,7 +338,7 @@ export function generateDocumentHtml(data: DocumentData): string {
         <div class="company-info">
           <strong>${companyName}</strong><br>
           ${companyAddress}<br>
-          Fecha: ${dateFormatted}
+          Fecha y Hora: ${dateFormatted}
         </div>
       </div>
 
@@ -361,7 +373,7 @@ export function generateDocumentHtml(data: DocumentData): string {
 
       <div class="section" style="margin-top: 20px;">
         <p class="clause-p">
-          El cliente receptor manifiesta haber examinado a su plena satisfacción el vehículo, comprobado el funcionamiento de sus mandos, luces y climatización, y recibe en este acto la posesión física y llaves del mismo en perfecto estado de funcionamiento.
+          El cliente receptor manifiesta haber examinado a su plena satisfacción el vehículo, comprobado el funcionamiento de sus mandos, luces y climatización, y recibe en este acto la posesión física y llaves del mismo en perfecto estado de funcionamiento, asumiendo la responsabilidad de su circulación desde este momento.
         </p>
       </div>
 
@@ -384,13 +396,132 @@ export function generateDocumentHtml(data: DocumentData): string {
     `;
   }
 
-  // Mandato DGT
+  // 5. CERTIFICADO DE GARANTÍA MECÁNICA 12 MESES
+  if (data.type === "garantia") {
+    return `
+      <div class="header">
+        <div>
+          <div class="logo-text">ORLANDO <span>CARS</span></div>
+          <div class="doc-title">CERTIFICADO DE PÓLIZA DE GARANTÍA MECÁNICA (12 MESES)</div>
+          <div style="font-size: 12px; color: #475569;">Cobertura de Reparaciones para Vehículos de Ocasión</div>
+        </div>
+        <div class="company-info">
+          <strong>${companyName}</strong><br>
+          CIF: ${companyCif}<br>
+          Fecha de Emisión: ${dateFormatted}
+        </div>
+      </div>
+
+      <div class="grid-2 section">
+        <div class="info-box">
+          <div class="section-title">TITULAR DE LA GARANTÍA</div>
+          <div class="info-row"><span class="info-label">Beneficiario:</span><span class="info-value">${data.clientName}</span></div>
+          <div class="info-row"><span class="info-label">DNI / CIF:</span><span class="info-value">${data.clientDni}</span></div>
+          <div class="info-row"><span class="info-label">Teléfono:</span><span class="info-value">${data.clientPhone || "+34 600 000 000"}</span></div>
+        </div>
+        <div class="info-box">
+          <div class="section-title">VEHÍCULO ASEGURADO</div>
+          <div class="info-row"><span class="info-label">Matrícula:</span><span class="info-value" style="font-family: monospace;">${data.plate}</span></div>
+          <div class="info-row"><span class="info-label">Bastidor:</span><span class="info-value" style="font-family: monospace;">${data.vin}</span></div>
+          <div class="info-row"><span class="info-label">Km Inicial:</span><span class="info-value">${data.mileage.toLocaleString("es-ES")} km</span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">COBERTURAS MECÁNICAS Y TÉCNICAS INCLUIDAS</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Órgano Mecánico</th>
+              <th>Componentes Cubiertos al 100%</th>
+              <th>Límite de Siniestro</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Motor</td><td>Bloque, culata, pistones, bielas, cigüeñal, árbol de levas y bomba de aceite</td><td>Hasta valor venal</td></tr>
+            <tr><td>Caja de Cambios</td><td>Engranajes, sincronizadores, convertidor de par y mecatrónica (DSG/Auto)</td><td>Hasta valor venal</td></tr>
+            <tr><td>Sobrealimentación</td><td>Turbocompresor, válvula wastegate y actuador geométrico</td><td>Hasta valor venal</td></tr>
+            <tr><td>Sistema de Inyección</td><td>Bomba de alta presión e inyectores diésel / gasolina</td><td>Hasta 2.500 €</td></tr>
+            <tr><td>Circuito de Refrigeración</td><td>Radiador, bomba de agua y termostato</td><td>Pieza y mano obra</td></tr>
+            <tr><td>Dirección y Frenos</td><td>Bomba de servodirección, cremallera, módulo ABS y servofreno</td><td>Pieza y mano obra</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section" style="margin-top: 15px;">
+        <p class="clause-p">
+          <strong>Condiciones de Activación:</strong> La presente garantía surte efecto desde el momento de la entrega física del vehículo y tiene una duración de <strong>365 días naturales</strong>. Para cualquier incidencia, el beneficiario deberá contactar previamente con el Servicio de Atención al Cliente de Orlando Cars antes de cualquier desmontaje.
+        </p>
+      </div>
+
+      <div class="signatures">
+        <div class="signature-box">
+          <strong>CONCESIONARIO EMISOR</strong>
+          <span>${companyName}</span>
+          <div class="stamp-placeholder">Sello y Firma GarantiPLUS</div>
+        </div>
+        <div class="signature-box">
+          <strong>CONFORMIDAD DEL BENEFICIARIO</strong>
+          <span>${data.clientName}</span>
+          <div class="stamp-placeholder">Firma de Recepción</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 6. MANDATO DGT
+  if (data.type === "mandato_dgt") {
+    return `
+      <div class="header">
+        <div>
+          <div class="logo-text">ORLANDO <span>CARS</span></div>
+          <div class="doc-title">MANDATO DE REPRESENTACIÓN PARA TRÁMITES ANTE LA DGT</div>
+          <div style="font-size: 12px; color: #475569;">Colegio Oficial de Gestores Administrativos de Madrid</div>
+        </div>
+        <div class="company-info">
+          <strong>${companyName}</strong><br>
+          CIF: ${companyCif}<br>
+          Fecha: ${dateFormatted}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">OTORGANTE (MANDANTE)</div>
+        <p class="clause-p">
+          D./Dña. <strong>${data.clientName}</strong>, con DNI/NIE <strong>${data.clientDni}</strong>, con domicilio en ${data.clientAddress || "Calle Principal 14, Madrid"}, en calidad de adquirente legítimo.
+        </p>
+        <div class="section-title" style="margin-top: 15px;">MANDATARIO (GESTORÍA Y CONCESIONARIO)</div>
+        <p class="clause-p">
+          A la entidad mercantil <strong>${companyName}</strong> y a los Gestores Administrativos Colegiados designados por la misma.
+        </p>
+        <div class="section-title" style="margin-top: 15px;">OBJETO DEL MANDATO TELEMÁTICO</div>
+        <p class="clause-p">
+          Para que en su nombre y representación realice ante la Jefatura Provincial de Tráfico todas las actuaciones relativas al <strong>CAMBIO DE TITULARIDAD / TRANSFERENCIA VEHICULAR</strong> del vehículo con matrícula <strong>${data.plate}</strong> y número de bastidor <strong>${data.vin}</strong>, así como para la retirada del permiso de circulación definitivo e informe telemático DGT.
+        </p>
+      </div>
+
+      <div class="signatures" style="margin-top: 60px;">
+        <div class="signature-box">
+          <strong>EL MANDATARIO</strong>
+          <span>${companyName}</span>
+          <div class="stamp-placeholder">Firma Gestor / Concesionario</div>
+        </div>
+        <div class="signature-box">
+          <strong>EL MANDANTE (CLIENTE)</strong>
+          <span>${data.clientName}</span>
+          <div class="stamp-placeholder">Firma del Adquirente</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 7. NOTIFICACIÓN DE VENTA DGT
   return `
     <div class="header">
       <div>
         <div class="logo-text">ORLANDO <span>CARS</span></div>
-        <div class="doc-title">MANDATO DE REPRESENTACIÓN PARA GESTIÓN EN DGT</div>
-        <div style="font-size: 12px; color: #475569;">Trámite Telemático de Cambio de Titularidad</div>
+        <div class="doc-title">COMUNICACIÓN Y NOTIFICACIÓN DE VENTA DGT</div>
+        <div style="font-size: 12px; color: #475569;">Trámite de Seguridad Jurídica del Vendedor</div>
       </div>
       <div class="company-info">
         <strong>${companyName}</strong><br>
@@ -400,42 +531,178 @@ export function generateDocumentHtml(data: DocumentData): string {
     </div>
 
     <div class="section">
-      <div class="section-title">OTORGANTE (MANDANTE)</div>
+      <div class="section-title">DATOS DE LA TRANSMISIÓN DEL VEHÍCULO</div>
+      <div class="info-box">
+        <div class="grid-2">
+          <div>
+            <div class="info-row"><span class="info-label">Matrícula:</span><span class="info-value" style="font-family: monospace;">${data.plate}</span></div>
+            <div class="info-row"><span class="info-label">Nº Bastidor:</span><span class="info-value" style="font-family: monospace;">${data.vin}</span></div>
+            <div class="info-row"><span class="info-label">Marca y Modelo:</span><span class="info-value">${data.brand} ${data.model}</span></div>
+          </div>
+          <div>
+            <div class="info-row"><span class="info-label">Fecha Venta:</span><span class="info-value">${dateFormatted}</span></div>
+            <div class="info-row"><span class="info-label">Comprador:</span><span class="info-value">${data.clientName}</span></div>
+            <div class="info-row"><span class="info-label">DNI Comprador:</span><span class="info-value">${data.clientDni}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
       <p class="clause-p">
-        D./Dña. <strong>${data.clientName}</strong>, con DNI/NIE <strong>${data.clientDni}</strong>, con domicilio en ${data.clientAddress || "Calle Principal 14, Madrid"}.
-      </p>
-      <div class="section-title" style="margin-top: 15px;">MANDATARIO (GESTORÍA Y CONCESIONARIO)</div>
-      <p class="clause-p">
-        A la entidad <strong>${companyName}</strong> y a su Gestoría Administrativa Colegiada autorizada.
-      </p>
-      <div class="section-title" style="margin-top: 15px;">OBJETO DEL MANDATO</div>
-      <p class="clause-p">
-        Para que en su nombre y representación realice ante la Jefatura Provincial de Tráfico todas las actuaciones relativas al <strong>CAMBIO DE TITULARIDAD / TRANSFERENCIA</strong> del vehículo con matrícula <strong>${data.plate}</strong> y número de bastidor <strong>${data.vin}</strong>.
+        Por medio del presente escrito, el transmitente notifica formalmente la venta del vehículo reseñado a favor del adquirente indicado, solicitando la anotación en el Registro de Vehículos de la DGT para la exención de responsabilidades sancionadoras e impositivas a partir de la fecha y hora de la entrega.
       </p>
     </div>
 
-    <div class="signatures" style="margin-top: 60px;">
+    <div class="signatures" style="margin-top: 50px;">
       <div class="signature-box">
-        <strong>EL MANDATARIO</strong>
+        <strong>EL TRANSMITENTE</strong>
         <span>${companyName}</span>
-        <div class="stamp-placeholder">Firma Gestor / Vendedor</div>
+        <div class="stamp-placeholder">Firma y Sello</div>
       </div>
       <div class="signature-box">
-        <strong>EL MANDANTE (CLIENTE)</strong>
+        <strong>EL ADQUIRENTE</strong>
         <span>${data.clientName}</span>
-        <div class="stamp-placeholder">Firma del Titular</div>
+        <div class="stamp-placeholder">Firma Notificado</div>
       </div>
     </div>
   `;
 }
 
+// Función para descargar directamente como archivo Word (.doc) editable
+export function downloadDocumentWord(data: DocumentData): void {
+  const bodyHtml = generateDocumentHtml(data);
+  const title = `${data.type.toUpperCase()}_${data.plate.replace("-", "")}`;
+
+  const wordHtml = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <!--[if gte mso 9]>
+        <xml>
+          <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>100</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+          </w:WordDocument>
+        </xml>
+        <![endif]-->
+        <meta charset="utf-8">
+        <title>${title}</title>
+        <style>
+          body { font-family: Arial, sans-serif; font-size: 10.5pt; color: #111; line-height: 1.4; }
+          .header { border-bottom: 2pt solid #0f172a; padding-bottom: 8pt; margin-bottom: 12pt; }
+          .logo-text { font-size: 18pt; font-weight: bold; color: #0f172a; }
+          .logo-text span { color: #0284c7; }
+          .doc-title { font-size: 13pt; font-weight: bold; text-transform: uppercase; margin-top: 4pt; }
+          .company-info { font-size: 9pt; color: #555; text-align: right; }
+          .section-title { font-size: 10pt; font-weight: bold; text-transform: uppercase; color: #0284c7; border-bottom: 1pt solid #ccc; padding-bottom: 3pt; margin: 10pt 0 6pt 0; }
+          .info-box { border: 1pt solid #ddd; background: #fafafa; padding: 8pt; margin-bottom: 10pt; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8pt; }
+          th { background: #f2f2f2; border: 1pt solid #ccc; padding: 6pt; font-size: 9pt; font-weight: bold; }
+          td { border: 1pt solid #ddd; padding: 6pt; font-size: 9pt; }
+          .signatures { margin-top: 35pt; width: 100%; }
+          .signature-box { border-top: 1pt solid #000; padding-top: 5pt; text-align: center; font-size: 9pt; width: 45%; display: inline-block; }
+          .stamp-placeholder { height: 40pt; }
+        </style>
+      </head>
+      <body>
+        ${bodyHtml}
+      </body>
+    </html>
+  `;
+
+  const blob = new Blob([wordHtml], { type: "application/msword;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${title}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Función para descargar como HTML autónomo imprimible o abrir diálogo nativo
+export function downloadDocumentHtml(data: DocumentData): void {
+  const title = `${data.type.toUpperCase()}_${data.plate.replace("-", "")}`;
+  const bodyHtml = generateDocumentHtml(data);
+
+  const fullHtml = `
+    <!DOCTYPE html>
+    <html lang="es">
+      <head>
+        <meta charset="utf-8">
+        <title>${title}</title>
+        <style>
+          @page { size: A4 portrait; margin: 12mm 15mm; }
+          * { box-sizing: border-box; }
+          body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            color: #0f172a; 
+            margin: 0; 
+            padding: 24px; 
+            font-size: 12.5px; 
+            line-height: 1.5; 
+            background: #ffffff; 
+          }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 20px; }
+          .logo-text { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; color: #0f172a; }
+          .logo-text span { color: #0284c7; }
+          .doc-title { font-size: 17px; font-weight: 800; text-transform: uppercase; color: #0f172a; margin-top: 4px; }
+          .company-info { font-size: 11px; color: #475569; text-align: right; line-height: 1.4; }
+          .section { margin-bottom: 18px; }
+          .section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #0284c7; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin-bottom: 8px; }
+          .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+          .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; }
+          .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
+          .info-label { color: #64748b; font-weight: 500; }
+          .info-value { color: #0f172a; font-weight: 700; text-align: right; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+          th { background: #f1f5f9; color: #334155; font-weight: 700; text-align: left; padding: 8px 10px; border-bottom: 1px solid #cbd5e1; font-size: 11px; text-transform: uppercase; }
+          td { padding: 9px 10px; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
+          .total-box { margin-top: 15px; display: flex; justify-content: flex-end; }
+          .total-card { width: 300px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; }
+          .rebu-notice { margin-top: 15px; padding: 10px 12px; background: #eff6ff; border-left: 3px solid #2563eb; font-size: 10.5px; color: #1e40af; line-height: 1.4; border-radius: 4px; }
+          .clause-p { font-size: 11px; color: #334155; text-align: justify; margin-bottom: 8px; line-height: 1.45; }
+          .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; page-break-inside: avoid; }
+          .signature-box { border-top: 1px solid #0f172a; padding-top: 8px; text-align: center; font-size: 11px; color: #475569; }
+          .signature-box strong { display: block; font-size: 12px; color: #0f172a; margin-bottom: 2px; }
+          .stamp-placeholder { height: 60px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-style: italic; font-size: 11px; }
+          .footer { margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 9.5px; color: #94a3b8; text-align: center; }
+          @media print {
+            body { padding: 0; background: transparent; }
+          }
+        </style>
+      </head>
+      <body>
+        ${bodyHtml}
+        <script>
+          window.onload = function() { window.print(); };
+        </script>
+      </body>
+    </html>
+  `;
+
+  const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${title}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Función para abrir en nueva pestaña con diálogo de impresión directo
 export function openPrintDocument(data: DocumentData): void {
   const title = `${data.type.toUpperCase()} - ${data.brand} ${data.model} (${data.plate})`;
   const bodyHtml = generateDocumentHtml(data);
 
   const printWindow = window.open("", "_blank", "width=900,height=1100");
   if (!printWindow) {
-    alert("⚠️ Por favor permite las ventanas emergentes (pop-ups) en tu navegador para abrir el documento.");
+    // Si el navegador bloqueó la ventana emergente, fallback a descarga directa
+    downloadDocumentHtml(data);
     return;
   }
 
@@ -531,8 +798,8 @@ export function openPrintDocument(data: DocumentData): void {
       <body>
         <div class="toolbar no-print">
           <div>
-            <div style="font-weight: 800; font-size: 13px;">Documento Listo — NexoCar</div>
-            <div style="font-size: 11px; color: #94a3b8;">Listo para descargar en PDF o enviar a impresora</div>
+            <div style="font-weight: 800; font-size: 13px;">Documento Oficial Listo — NexoCar</div>
+            <div style="font-size: 11px; color: #94a3b8;">Pulse para imprimir o descargar como archivo PDF</div>
           </div>
           <button class="toolbar-btn" onclick="window.print()">
             <span>🖨️ Imprimir / Guardar como PDF</span>
