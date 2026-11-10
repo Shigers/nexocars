@@ -229,11 +229,12 @@ export default function InvoicesPage() {
         </table>
       </div>
 
-      {selectedDocData && (
+      {modalOpen && (
         <DocumentModal
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
-          initialData={selectedDocData}
+          documentType="factura"
+          title="Factura Oficial de Venta (Régimen REBU)"
         />
       )}
     </div>
