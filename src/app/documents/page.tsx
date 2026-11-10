@@ -1,32 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   FileText, 
-  Download, 
   Printer, 
-  Plus, 
-  ShieldCheck, 
-  CheckCircle, 
   Eye, 
-  Car, 
   FileDown, 
+  ShieldCheck, 
   Receipt,
   FileCheck2,
   CalendarCheck,
-  Edit3,
-  Layers
+  CheckCircle,
+  FileSignature
 } from "lucide-react";
 import { DocumentModal } from "@/components/documents/document-modal";
 import { 
-  DocumentData, 
   DocumentType,
   openPrintDocument, 
-  downloadDocumentWord, 
-  downloadDocumentHtml 
+  downloadDocumentWord 
 } from "@/lib/document-generator";
-import { getStoredVehicles } from "@/lib/storage";
-import { Vehicle } from "@/types";
 
 interface TemplateItem {
   id: string;
@@ -36,78 +28,12 @@ interface TemplateItem {
   category: "Legal & Ventas" | "Fiscalidad" | "Comercial" | "Taller & Garantía" | "Gestoría DGT";
   badge: string;
   badgeColor: string;
+  icon: any;
 }
 
 export default function DocumentsPage() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  
-  // Modo de operación: "blank" (en blanco por defecto) o "custom" (rellenado)
-  const [documentMode, setDocumentMode] = useState<"blank" | "custom">("blank");
-  
-  // Datos personalizados para rellenar en el momento
-  const [customClientName, setCustomClientName] = useState("");
-  const [customClientDni, setCustomClientDni] = useState("");
-  const [customClientPhone, setCustomClientPhone] = useState("");
-  const [customBrand, setCustomBrand] = useState("");
-  const [customModel, setCustomModel] = useState("");
-  const [customPlate, setCustomPlate] = useState("");
-  const [customVin, setCustomVin] = useState("");
-  const [customKm, setCustomKm] = useState("");
-  const [customPrice, setCustomPrice] = useState("");
-  const [customDeposit, setCustomDeposit] = useState("500");
-
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedDocData, setSelectedDocData] = useState<DocumentData | null>(null);
-
-  useEffect(() => {
-    setVehicles(getStoredVehicles());
-  }, []);
-
-  const getDocDataForType = (type: DocumentType, forceBlank = false): DocumentData => {
-    const isBlank = forceBlank || documentMode === "blank";
-
-    if (isBlank) {
-      return {
-        type,
-        isBlank: true,
-      };
-    }
-
-    return {
-      type,
-      isBlank: false,
-      invoiceNumber: `FAC-2026-${customPlate ? customPlate.replace("-", "") : "089"}`,
-      clientName: customClientName || "Nombre del Cliente",
-      clientDni: customClientDni || "DNI / NIE",
-      clientPhone: customClientPhone || "+34 600 000 000",
-      brand: customBrand || "Marca",
-      model: customModel || "Modelo",
-      plate: customPlate || "0000-XXX",
-      vin: customVin || "VIN...",
-      mileage: Number(customKm) || 0,
-      year: 2022,
-      sellingPrice: Number(customPrice) || 0,
-      depositAmount: Number(customDeposit) || 500,
-      taxScheme: "REBU",
-      paymentMethod: "Transferencia Bancaria",
-    };
-  };
-
-  const handlePreview = (type: DocumentType, isBlank = false) => {
-    const data = getDocDataForType(type, isBlank);
-    setSelectedDocData(data);
-    setModalOpen(true);
-  };
-
-  const handleDirectPrint = (type: DocumentType, isBlank = false) => {
-    const data = getDocDataForType(type, isBlank);
-    openPrintDocument(data);
-  };
-
-  const handleDownloadWord = (type: DocumentType, isBlank = false) => {
-    const data = getDocDataForType(type, isBlank);
-    downloadDocumentWord(data);
-  };
+  const [activeModalType, setActiveModalType] = useState<DocumentType | null>(null);
+  const [activeModalTitle, setActiveModalTitle] = useState<string>("");
 
   const templates: TemplateItem[] = [
     {
@@ -116,17 +42,19 @@ export default function DocumentsPage() {
       name: "Contrato Compraventa Oficial VO (REBU)",
       description: "Contrato legal adaptado a la legislación española con cláusulas de garantía de 12 meses, ausencia de cargas, kilometraje certificado y registro DGT.",
       category: "Legal & Ventas",
-      badge: "Plantilla en Blanco",
+      badge: "Oficial VO",
       badgeColor: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+      icon: FileSignature,
     },
     {
       id: "tmpl-02",
       type: "factura",
       name: "Factura Oficial de Venta (Régimen REBU)",
-      description: "Factura oficial con membrete de Orlando Cars S.L. y mención obligatoria de exención de desglose (Arts. 135 a 139 Ley del IVA).",
+      description: "Factura oficial con membrete de Orlando Cars S.L. y mención legal obligatoria de exención de desglose (Arts. 135 a 139 Ley del IVA).",
       category: "Fiscalidad",
       badge: "AEAT / Hacienda",
       badgeColor: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+      icon: Receipt,
     },
     {
       id: "tmpl-03",
@@ -136,6 +64,7 @@ export default function DocumentsPage() {
       category: "Comercial",
       badge: "Arras Penitenciales",
       badgeColor: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+      icon: CheckCircle,
     },
     {
       id: "tmpl-04",
@@ -145,6 +74,7 @@ export default function DocumentsPage() {
       category: "Legal & Ventas",
       badge: "Exención Multas",
       badgeColor: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+      icon: FileCheck2,
     },
     {
       id: "tmpl-05",
@@ -154,6 +84,7 @@ export default function DocumentsPage() {
       category: "Taller & Garantía",
       badge: "1 Año Cobertura",
       badgeColor: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+      icon: ShieldCheck,
     },
     {
       id: "tmpl-06",
@@ -163,6 +94,7 @@ export default function DocumentsPage() {
       category: "Gestoría DGT",
       badge: "Gestoría Colegiada",
       badgeColor: "bg-indigo-500/15 text-indigo-400 border-indigo-500/30",
+      icon: FileText,
     },
     {
       id: "tmpl-07",
@@ -172,232 +104,113 @@ export default function DocumentsPage() {
       category: "Gestoría DGT",
       badge: "Seguridad Vendedor",
       badgeColor: "bg-rose-500/15 text-rose-400 border-rose-500/30",
+      icon: CalendarCheck,
     },
   ];
 
+  const handleOpenDocument = (tmpl: TemplateItem) => {
+    setActiveModalType(tmpl.type);
+    setActiveModalTitle(tmpl.name);
+  };
+
+  const handleQuickDownloadBlankWord = (type: DocumentType) => {
+    downloadDocumentWord({ type, isBlank: true });
+  };
+
+  const handleQuickPrintBlankPdf = (type: DocumentType) => {
+    openPrintDocument({ type, isBlank: true });
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header and Mode Selector */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
             <span>Documentación & Plantillas Digitales</span>
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/30">
-              Orlando Cars Oficial
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-semibold border border-blue-500/30">
+              Orlando Cars
             </span>
           </h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Modelos oficiales listos en blanco para imprimir y firmar en mano, o para rellenar en el momento de la venta.
+            Cada documento es 100% autónomo. Abre solo el que necesites para rellenarlo en el momento o descárgalo en blanco directamente.
           </p>
         </div>
-
-        {/* Tab Toggle: En Blanco vs Rellenar en el momento */}
-        <div className="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl text-xs">
-          <button
-            onClick={() => setDocumentMode("blank")}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-semibold transition-all ${
-              documentMode === "blank"
-                ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Plantillas en Blanco (Oficial)</span>
-          </button>
-          <button
-            onClick={() => setDocumentMode("custom")}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-semibold transition-all ${
-              documentMode === "custom"
-                ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>Rellenar Datos en el Momento</span>
-          </button>
-        </div>
       </div>
 
-      {/* Formulario Rápido si el modo es "custom" */}
-      {documentMode === "custom" && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-slate-900 border border-blue-500/30 shadow-xl space-y-4 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-            <div className="flex items-center gap-2">
-              <Edit3 className="w-4 h-4 text-blue-400" />
-              <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-                Introduce los Datos Reales de la Operación en Orlando Cars
-              </h2>
-            </div>
-            <span className="text-[10px] text-slate-400">
-              Se aplicarán instantáneamente a los 7 documentos de abajo
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-            <div>
-              <label className="block text-[11px] text-slate-400 mb-1">Nombre Completo del Cliente:</label>
-              <input
-                type="text"
-                placeholder="Ej. Juan Pérez García"
-                value={customClientName}
-                onChange={(e) => setCustomClientName(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-slate-400 mb-1">DNI / NIE / CIF:</label>
-              <input
-                type="text"
-                placeholder="Ej. 53892104M"
-                value={customClientDni}
-                onChange={(e) => setCustomClientDni(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500 font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-slate-400 mb-1">Teléfono:</label>
-              <input
-                type="text"
-                placeholder="Ej. +34 600 123 456"
-                value={customClientPhone}
-                onChange={(e) => setCustomClientPhone(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-slate-400 mb-1">Marca del Vehículo:</label>
-              <input
-                type="text"
-                placeholder="Ej. Audi, Mercedes, BMW..."
-                value={customBrand}
-                onChange={(e) => setCustomBrand(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-slate-400 mb-1">Modelo / Versión:</label>
-              <input
-                type="text"
-                placeholder="Ej. A4 2.0 TDI S-Line"
-                value={customModel}
-                onChange={(e) => setCustomModel(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-slate-400 mb-1">Matrícula:</label>
-              <input
-                type="text"
-                placeholder="Ej. 1234-LBC"
-                value={customPlate}
-                onChange={(e) => setCustomPlate(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500 font-mono font-bold"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-slate-400 mb-1">Nº Bastidor (VIN):</label>
-              <input
-                type="text"
-                placeholder="Ej. WAUZZZ..."
-                value={customVin}
-                onChange={(e) => setCustomVin(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500 font-mono text-[11px]"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-slate-400 mb-1">Kilómetros:</label>
-              <input
-                type="number"
-                placeholder="Ej. 65000"
-                value={customKm}
-                onChange={(e) => setCustomKm(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500 font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-slate-400 mb-1">Precio Final Pactado (€):</label>
-              <input
-                type="number"
-                placeholder="Ej. 24900"
-                value={customPrice}
-                onChange={(e) => setCustomPrice(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500 font-mono font-bold text-emerald-400"
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] text-slate-400 mb-1">Señal / Reserva (€):</label>
-              <input
-                type="number"
-                placeholder="Ej. 500"
-                value={customDeposit}
-                onChange={(e) => setCustomDeposit(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-blue-500 font-mono"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Grid of Templates */}
+      {/* Grid of Autonomous Documents */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {templates.map((tmpl) => (
-          <div
-            key={tmpl.id}
-            className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between space-y-4 hover:border-slate-700 transition-all shadow-md group"
-          >
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${tmpl.badgeColor}`}>
-                  {documentMode === "blank" ? "Plantilla Oficial en Blanco" : "Rellenada con Datos"}
-                </span>
-                <span className="text-[10px] text-slate-500 font-medium">{tmpl.category}</span>
-              </div>
-              <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
-                {tmpl.name}
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed min-h-[48px]">
-                {tmpl.description}
-              </p>
-            </div>
+        {templates.map((tmpl) => {
+          const Icon = tmpl.icon;
+          return (
+            <div
+              key={tmpl.id}
+              className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between space-y-4 hover:border-blue-500/40 transition-all shadow-md group"
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${tmpl.badgeColor}`}>
+                    {tmpl.badge}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">{tmpl.category}</span>
+                </div>
 
-            <div className="pt-3.5 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
-              <button
-                onClick={() => handlePreview(tmpl.type)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
-                title={documentMode === "blank" ? "Ver plantilla oficial en blanco con líneas para rellenar a mano" : "Ver documento con los datos introducidos"}
-              >
-                <Eye className="w-3.5 h-3.5 text-blue-400" />
-                <span>{documentMode === "blank" ? "Ver en Blanco" : "Ver Documento"}</span>
-              </button>
+                <div className="flex items-start gap-3">
+                  <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-blue-400 flex-shrink-0 group-hover:border-blue-500/30 transition-colors">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
+                    {tmpl.name}
+                  </h3>
+                </div>
 
-              <div className="flex items-center gap-1.5">
+                <p className="text-xs text-slate-400 leading-relaxed min-h-[44px]">
+                  {tmpl.description}
+                </p>
+              </div>
+
+              {/* Botones de acción autónomos para ESTE documento */}
+              <div className="pt-3.5 border-t border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
                 <button
-                  onClick={() => handleDownloadWord(tmpl.type)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium border border-slate-700 transition-colors"
-                  title="Descargar archivo editable para Microsoft Word (.doc)"
+                  onClick={() => handleOpenDocument(tmpl)}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/20 active:scale-95"
+                  title="Abrir editor autónomo de este documento (en blanco o rellenar)"
                 >
-                  <FileDown className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Word</span>
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Abrir Documento</span>
                 </button>
-                <button
-                  onClick={() => handleDirectPrint(tmpl.type)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors shadow-md shadow-blue-600/20 active:scale-95"
-                  title="Imprimir directamente o guardar en PDF"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>PDF</span>
-                </button>
+
+                <div className="flex items-center gap-1.5 justify-end">
+                  <button
+                    onClick={() => handleQuickDownloadBlankWord(tmpl.type)}
+                    className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium border border-slate-700 transition-colors"
+                    title="Descargar plantilla en blanco para Word (.doc)"
+                  >
+                    <FileDown className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Word</span>
+                  </button>
+                  <button
+                    onClick={() => handleQuickPrintBlankPdf(tmpl.type)}
+                    className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700 transition-colors"
+                    title="Imprimir o guardar en PDF directamente en blanco"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>PDF</span>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {selectedDocData && (
+      {/* Modal Autónomo: Abre únicamente el documento que el usuario seleccionó */}
+      {activeModalType && (
         <DocumentModal
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          initialData={selectedDocData}
+          isOpen={!!activeModalType}
+          onClose={() => setActiveModalType(null)}
+          documentType={activeModalType}
+          title={activeModalTitle}
         />
       )}
     </div>
