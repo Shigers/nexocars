@@ -11,6 +11,7 @@ export type DocumentType =
 
 export interface DocumentData {
   type: DocumentType;
+  isBlank?: boolean; // Si es true, genera la plantilla en blanco con líneas de rellenado
   invoiceNumber?: string;
   date?: string;
   companyName?: string;
@@ -19,23 +20,23 @@ export interface DocumentData {
   companyPhone?: string;
   companyEmail?: string;
   // Cliente
-  clientName: string;
-  clientDni: string;
+  clientName?: string;
+  clientDni?: string;
   clientAddress?: string;
   clientPhone?: string;
   clientEmail?: string;
   // Vehículo
-  brand: string;
-  model: string;
+  brand?: string;
+  model?: string;
   version?: string;
-  plate: string;
-  vin: string;
-  mileage: number;
-  year: number;
+  plate?: string;
+  vin?: string;
+  mileage?: number;
+  year?: number;
   fuelType?: string;
   color?: string;
   // Importes y Fiscalidad
-  sellingPrice: number;
+  sellingPrice?: number;
   taxScheme?: "REBU" | "GENERAL";
   taxBase?: number;
   taxAmount?: number;
@@ -44,18 +45,36 @@ export interface DocumentData {
 }
 
 export function generateDocumentHtml(data: DocumentData): string {
+  const isBlank = !!data.isBlank;
   const companyName = data.companyName || "ORLANDO CARS S.L.";
   const companyCif = data.companyCif || "B-88492019";
   const companyAddress = data.companyAddress || "Vía Complutense 128, 28805 Alcalá de Henares (Madrid)";
   const companyPhone = data.companyPhone || "+34 918 203 944 / +34 624 56 36 95";
   const companyEmail = data.companyEmail || "administracion@orlandocars.es";
-  const dateFormatted = data.date || new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" });
-  const invoiceNum = data.invoiceNumber || `FAC-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
+  const dateFormatted = data.date || (isBlank ? "_____ de __________________ de 2026" : new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" }));
+  const invoiceNum = isBlank ? "FAC-2026-________" : (data.invoiceNumber || `FAC-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`);
 
   const isRebu = (data.taxScheme || "REBU") === "REBU";
   const total = data.sellingPrice || 0;
   const taxBase = data.taxBase || (isRebu ? total * 0.15 : total / 1.21);
   const taxAmount = data.taxAmount || (isRebu ? taxBase * 0.21 : total - taxBase);
+
+  // Valores dinámicos o líneas en blanco
+  const cName = isBlank ? "________________________________________________________" : (data.clientName || "____________________");
+  const cDni = isBlank ? "____________________" : (data.clientDni || "____________________");
+  const cAddress = isBlank ? "________________________________________________________" : (data.clientAddress || "____________________");
+  const cPhone = isBlank ? "____________________" : (data.clientPhone || "____________________");
+  
+  const vBrand = isBlank ? "____________________" : (data.brand || "____________________");
+  const vModel = isBlank ? "____________________" : (data.model || "____________________");
+  const vPlate = isBlank ? "____________________" : (data.plate || "____________________");
+  const vVin = isBlank ? "____________________________________" : (data.vin || "____________________");
+  const vKm = isBlank ? "____________________ km" : `${data.mileage?.toLocaleString("es-ES") || 0} km`;
+  const vYear = isBlank ? "__________" : (data.year || "____");
+  const vColor = isBlank ? "____________________" : (data.color || "Gris");
+  const vFuel = isBlank ? "____________________" : (data.fuelType || "Diésel / Gasolina");
+  const vPrice = isBlank ? "____________________ €" : `${total.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €`;
+  const vDeposit = isBlank ? "____________________ €" : `${(data.depositAmount || 500).toLocaleString("es-ES", { minimumFractionDigits: 2 })} €`;
 
   // 1. FACTURA DE VENTA
   if (data.type === "factura") {
@@ -63,8 +82,8 @@ export function generateDocumentHtml(data: DocumentData): string {
       <div class="header">
         <div>
           <div class="logo-text">ORLANDO <span>CARS</span></div>
-          <div class="doc-title">FACTURA ORDINARIA OFICIAL</div>
-          <div style="font-size: 13px; font-weight: 800; color: #2563eb; margin-top: 3px;">Nº: ${invoiceNum}</div>
+          <div class="doc-title">FACTURA ORDINARIA OFICIAL ${isBlank ? "(PLANTILLA)" : ""}</div>
+          <div style="font-size: 13px; font-weight: 800; color: #2563eb; margin-top: 3px;">Nº Factura: ${invoiceNum}</div>
         </div>
         <div class="company-info">
           <strong>${companyName}</strong><br>
@@ -77,44 +96,44 @@ export function generateDocumentHtml(data: DocumentData): string {
 
       <div class="grid-2 section">
         <div class="info-box">
-          <div class="section-title">DATOS DEL COMPRADOR (CLIENTE)</div>
-          <div class="info-row"><span class="info-label">Nombre / Razón Social:</span><span class="info-value">${data.clientName}</span></div>
-          <div class="info-row"><span class="info-label">DNI / NIE / CIF:</span><span class="info-value">${data.clientDni}</span></div>
-          <div class="info-row"><span class="info-label">Dirección:</span><span class="info-value">${data.clientAddress || "Calle Principal 14, 28001 Madrid"}</span></div>
-          <div class="info-row"><span class="info-label">Teléfono:</span><span class="info-value">${data.clientPhone || "+34 600 000 000"}</span></div>
+          <div class="section-title">DATOS DEL ADQUIRENTE / CLIENTE</div>
+          <div class="info-row"><span class="info-label">Nombre / Razón Social:</span><span class="info-value">${cName}</span></div>
+          <div class="info-row"><span class="info-label">DNI / NIE / CIF:</span><span class="info-value">${cDni}</span></div>
+          <div class="info-row"><span class="info-label">Dirección Fiscal:</span><span class="info-value">${cAddress}</span></div>
+          <div class="info-row"><span class="info-label">Teléfono:</span><span class="info-value">${cPhone}</span></div>
         </div>
 
         <div class="info-box">
-          <div class="section-title">DETALLES DE LA OPERACIÓN</div>
-          <div class="info-row"><span class="info-label">Fecha de Emisión:</span><span class="info-value">${dateFormatted}</span></div>
-          <div class="info-row"><span class="info-label">Régimen Fiscal:</span><span class="info-value" style="color: #2563eb;">${isRebu ? "REBU (Régimen Especial Bienes Usados)" : "Régimen General IVA (21%)"}</span></div>
-          <div class="info-row"><span class="info-label">Forma de Pago:</span><span class="info-value">${data.paymentMethod || "Transferencia Bancaria Inmediata"}</span></div>
-          <div class="info-row"><span class="info-label">Estado:</span><span class="info-value" style="color: #16a34a;">COBRADA / PAGADA</span></div>
+          <div class="section-title">DATOS FISCALES DE FACTURACIÓN</div>
+          <div class="info-row"><span class="info-label">Fecha de Expedición:</span><span class="info-value">${dateFormatted}</span></div>
+          <div class="info-row"><span class="info-label">Régimen de IVA:</span><span class="info-value" style="color: #2563eb;">REBU (Arts. 135-139 Ley del IVA)</span></div>
+          <div class="info-row"><span class="info-label">Forma de Pago:</span><span class="info-value">${isBlank ? "Transferencia / Financiación / Contado" : (data.paymentMethod || "Transferencia Bancaria")}</span></div>
+          <div class="info-row"><span class="info-label">Estado de Cobro:</span><span class="info-value" style="color: #16a34a;">${isBlank ? "PAGADA / COBRADA" : "COBRADA"}</span></div>
         </div>
       </div>
 
       <div class="section">
-        <div class="section-title">CONCEPTO / VEHÍCULO TRANSMITIDO</div>
+        <div class="section-title">DESCRIPCIÓN DEL VEHÍCULO TRANSMITIDO</div>
         <table>
           <thead>
             <tr>
-              <th>Descripción del Vehículo</th>
+              <th>Marca y Modelo</th>
               <th>Matrícula</th>
               <th>Nº Bastidor (VIN)</th>
-              <th>Año / Km</th>
+              <th>Año / Kilometraje</th>
               <th style="text-align: right;">Total Importe</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>
-                <strong>${data.brand} ${data.model}</strong><br>
-                <span style="font-size: 11px; color: #64748b;">${data.version || "Acabado de stock"} • Color: ${data.color || "Gris Metalizado"} • Combustible: ${data.fuelType || "Diésel"}</span>
+                <strong>${vBrand} ${vModel}</strong><br>
+                <span style="font-size: 11px; color: #64748b;">Color: ${vColor} • Combustible: ${vFuel}</span>
               </td>
-              <td style="font-family: monospace; font-weight: bold; font-size: 13px;">${data.plate}</td>
-              <td style="font-family: monospace; font-size: 11px;">${data.vin}</td>
-              <td>${data.year} • ${data.mileage.toLocaleString("es-ES")} km</td>
-              <td style="text-align: right; font-weight: 800; font-size: 13px;">${total.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</td>
+              <td style="font-family: monospace; font-weight: bold; font-size: 13px;">${vPlate}</td>
+              <td style="font-family: monospace; font-size: 11px;">${vVin}</td>
+              <td>${vYear} • ${vKm}</td>
+              <td style="text-align: right; font-weight: 800; font-size: 13px;">${vPrice}</td>
             </tr>
           </tbody>
         </table>
@@ -122,16 +141,16 @@ export function generateDocumentHtml(data: DocumentData): string {
 
       <div class="total-box">
         <div class="total-card">
-          ${isRebu ? `
-            <div class="info-row"><span class="info-label">Base Imponible Marginal (REBU):</span><span class="info-value">${taxBase.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span></div>
-            <div class="info-row"><span class="info-label">IVA Marginal 21%:</span><span class="info-value">${taxAmount.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span></div>
+          ${isBlank ? `
+            <div class="info-row"><span class="info-label">Base Imponible Marginal (REBU):</span><span class="info-value">____________________ €</span></div>
+            <div class="info-row"><span class="info-label">Cuota IVA Marginal (21%):</span><span class="info-value">____________________ €</span></div>
             <div style="border-top: 1px solid #cbd5e1; margin: 8px 0; padding-top: 8px;" class="info-row">
               <span style="font-size: 14px; font-weight: 800; color: #0f172a;">TOTAL FACTURA:</span>
-              <span style="font-size: 16px; font-weight: 900; color: #2563eb;">${total.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span>
+              <span style="font-size: 16px; font-weight: 900; color: #2563eb;">____________________ €</span>
             </div>
           ` : `
-            <div class="info-row"><span class="info-label">Base Imponible:</span><span class="info-value">${taxBase.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span></div>
-            <div class="info-row"><span class="info-label">IVA (21%):</span><span class="info-value">${taxAmount.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span></div>
+            <div class="info-row"><span class="info-label">Base Imponible Marginal (REBU):</span><span class="info-value">${taxBase.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span></div>
+            <div class="info-row"><span class="info-label">IVA Marginal 21%:</span><span class="info-value">${taxAmount.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span></div>
             <div style="border-top: 1px solid #cbd5e1; margin: 8px 0; padding-top: 8px;" class="info-row">
               <span style="font-size: 14px; font-weight: 800; color: #0f172a;">TOTAL FACTURA:</span>
               <span style="font-size: 16px; font-weight: 900; color: #2563eb;">${total.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span>
@@ -140,29 +159,26 @@ export function generateDocumentHtml(data: DocumentData): string {
         </div>
       </div>
 
-      ${isRebu ? `
-        <div class="rebu-notice">
-          <strong>MENCIÓN OBLIGATORIA REBU:</strong> Operación sujeta al Régimen Especial de los Bienes Usados, Objetos de Arte, Antigüedades y Objetos de Colección (Artículos 135 a 139 de la Ley 37/1992 del IVA). 
-          Conforme al artículo 138 de la citada Ley, la cuota de repercusión tributaria no se desglosa en la factura emitida al adquirente.
-        </div>
-      ` : ""}
+      <div class="rebu-notice">
+        <strong>MENCIÓN PRECEPTIVA REBU:</strong> Operación sujeta al Régimen Especial de los Bienes Usados, Objetos de Arte, Antigüedades y Objetos de Colección (Artículos 135 a 139 de la Ley 37/1992 del IVA). 
+        Conforme al artículo 138 de la citada Ley, la cuota de repercusión tributaria no se desglosa en la factura emitida al comprador.
+      </div>
 
       <div class="signatures">
         <div class="signature-box">
-          <strong>POR LA PARTE VENDEDORA</strong>
+          <strong>POR EL TRANSMITENTE (VENDEDOR)</strong>
           <span>${companyName}</span>
           <div class="stamp-placeholder">Firma y Sello Oficial</div>
         </div>
         <div class="signature-box">
-          <strong>RECIBÍ CONFORME (EL CLIENTE)</strong>
-          <span>${data.clientName}</span>
-          <div class="stamp-placeholder">Firma del Adquirente</div>
+          <strong>RECIBÍ CONFORME (EL ADQUIRENTE)</strong>
+          <span>${isBlank ? "Firma del Comprador" : data.clientName}</span>
+          <div class="stamp-placeholder">Firma y DNI</div>
         </div>
       </div>
 
       <div class="footer">
-        Documento generado electrónicamente por el sistema ERP NexoCar para Orlando Cars & Loewe Cars.<br>
-        Inscrita en el Registro Mercantil de Madrid. Todos los derechos reservados.
+        Factura emitida por el sistema ERP NexoCar para Orlando Cars S.L. Registro Mercantil de Madrid.
       </div>
     `;
   }
@@ -174,7 +190,7 @@ export function generateDocumentHtml(data: DocumentData): string {
         <div>
           <div class="logo-text">ORLANDO <span>CARS</span></div>
           <div class="doc-title">CONTRATO DE COMPRAVENTA DE VEHÍCULO USADO</div>
-          <div style="font-size: 12px; color: #475569;">Garantía Legal Conforme a RDL 1/2007 de Protección a Consumidores</div>
+          <div style="font-size: 12px; color: #475569;">Garantía Legal de 12 Meses Conforme a RDL 1/2007 (Consumidores)</div>
         </div>
         <div class="company-info">
           <strong>${companyName}</strong><br>
@@ -187,10 +203,10 @@ export function generateDocumentHtml(data: DocumentData): string {
       <div class="section">
         <div class="section-title">REUNIDOS</div>
         <p class="clause-p">
-          <strong>DE UNA PARTE (VENDEDOR):</strong> La entidad mercantil <strong>${companyName}</strong>, con NIF <strong>${companyCif}</strong>, con domicilio comercial en ${companyAddress}, representada en este acto por su dirección comercial con facultades bastantes.
+          <strong>DE UNA PARTE (PARTE VENDEDORA):</strong> La entidad mercantil <strong>${companyName}</strong>, provista de NIF nº <strong>${companyCif}</strong>, con domicilio comercial y exposición en ${companyAddress}, representada legalmente para este acto.
         </p>
         <p class="clause-p">
-          <strong>DE OTRA PARTE (COMPRADOR):</strong> D./Dña. <strong>${data.clientName}</strong>, mayor de edad, provisto de DNI/NIE nº <strong>${data.clientDni}</strong>, con domicilio en ${data.clientAddress || "Calle Principal 14, Madrid"} y teléfono ${data.clientPhone || "+34 600 000 000"}.
+          <strong>DE OTRA PARTE (PARTE COMPRADORA):</strong> D./Dña. <strong>${cName}</strong>, mayor de edad, provisto de DNI/NIE nº <strong>${cDni}</strong>, con domicilio en ${cAddress} y teléfono de contacto ${cPhone}.
         </p>
         <p class="clause-p">
           Ambas partes se reconocen mutuamente la capacidad legal necesaria para otorgar el presente contrato de compraventa y al efecto:
@@ -198,21 +214,21 @@ export function generateDocumentHtml(data: DocumentData): string {
       </div>
 
       <div class="section">
-        <div class="section-title">EXPONEN & IDENTIFICACIÓN DEL VEHÍCULO</div>
+        <div class="section-title">EXPONEN & IDENTIFICACIÓN DEL VEHÍCULO OBJETO DE VENTA</div>
         <p class="clause-p">
-          Que la parte vendedora es propietaria legítima del vehículo turismo usado que a continuación se describe:
+          Que la parte vendedora es propietaria legítima del vehículo turismo usado cuyas características y estado se detallan:
         </p>
         <div class="info-box">
           <div class="grid-2">
             <div>
-              <div class="info-row"><span class="info-label">Marca y Modelo:</span><span class="info-value">${data.brand} ${data.model}</span></div>
-              <div class="info-row"><span class="info-label">Matrícula:</span><span class="info-value" style="font-family: monospace;">${data.plate}</span></div>
-              <div class="info-row"><span class="info-label">Nº Bastidor (VIN):</span><span class="info-value" style="font-family: monospace;">${data.vin}</span></div>
+              <div class="info-row"><span class="info-label">Marca y Modelo:</span><span class="info-value">${vBrand} ${vModel}</span></div>
+              <div class="info-row"><span class="info-label">Matrícula:</span><span class="info-value" style="font-family: monospace;">${vPlate}</span></div>
+              <div class="info-row"><span class="info-label">Nº Bastidor (VIN):</span><span class="info-value" style="font-family: monospace;">${vVin}</span></div>
             </div>
             <div>
-              <div class="info-row"><span class="info-label">Kilometraje Actual:</span><span class="info-value">${data.mileage.toLocaleString("es-ES")} km certificados</span></div>
-              <div class="info-row"><span class="info-label">Año 1ª Matriculación:</span><span class="info-value">${data.year}</span></div>
-              <div class="info-row"><span class="info-label">Combustible / Motor:</span><span class="info-value">${data.fuelType || "Diésel / Gasolina"}</span></div>
+              <div class="info-row"><span class="info-label">Kilometraje Actual:</span><span class="info-value">${vKm} certificados</span></div>
+              <div class="info-row"><span class="info-label">Año 1ª Matriculación:</span><span class="info-value">${vYear}</span></div>
+              <div class="info-row"><span class="info-label">Combustible:</span><span class="info-value">${vFuel}</span></div>
             </div>
           </div>
         </div>
@@ -221,16 +237,16 @@ export function generateDocumentHtml(data: DocumentData): string {
       <div class="section">
         <div class="section-title">ESTIPULACIONES Y CLÁUSULAS CONTRACTUALES</div>
         <p class="clause-p">
-          <strong>PRIMERA. - OBJETO Y PRECIO:</strong> El vendedor transmite la propiedad del vehículo reseñado al comprador por el precio cierto de <strong>${total.toLocaleString("es-ES", { minimumFractionDigits: 2 })} € (IVA incluido bajo Régimen REBU)</strong>, que el comprador abona en este acto mediante ${data.paymentMethod || "transferencia bancaria"}, sirviendo este documento como justificante de pago.
+          <strong>PRIMERA. - OBJETO Y PRECIO:</strong> El vendedor transmite la propiedad del vehículo reseñado al comprador por el precio cierto de <strong>${vPrice} (IVA incluido bajo Régimen Especial REBU)</strong>, que el comprador abona mediante ${isBlank ? "transferencia bancaria / financiación / contado" : (data.paymentMethod || "transferencia bancaria")}, sirviendo el presente documento como carta de pago y recibo formal.
         </p>
         <p class="clause-p">
-          <strong>SEGUNDA. - CARGAS Y GRAVÁMENES:</strong> La parte vendedora declara bajo su responsabilidad que sobre el vehículo objeto de la venta no pesa ningún tipo de carga, gravamen, embargo, reserva de dominio, precinto ni impuesto municipal devengado y pendiente de pago anterior a la fecha de este contrato.
+          <strong>SEGUNDA. - CARGAS, GRAVÁMENES Y RESERVA DE DOMINIO:</strong> La parte vendedora declara bajo su responsabilidad que sobre el vehículo objeto de la transmisión no pesa ningún tipo de carga, gravamen, embargo, reserva de dominio, precinto ni impuesto municipal de tracción mecánica (IVTM) devengado y pendiente de pago anterior a la fecha de este contrato.
         </p>
         <p class="clause-p">
-          <strong>TERCERA. - GARANTÍA MECÁNICA LEGAL (12 MESES):</strong> La parte vendedora otorga una <strong>Garantía Mecánica de 12 meses</strong> a contar desde la entrega física del vehículo, que cubre averías imprevistas de motor, caja de cambios y componentes mecánicos principales conforme a la Ley General para la Defensa de los Consumidores y Usuarios (Real Decreto Legislativo 1/2007). Quedan excluidos los desgastes naturales propios del uso y kilometraje del vehículo.
+          <strong>TERCERA. - GARANTÍA MECÁNICA LEGAL (12 MESES):</strong> La parte vendedora otorga una <strong>Garantía Mecánica de 12 meses</strong> a contar desde la entrega física del vehículo, que cubre averías fortuitas de motor, caja de cambios y órganos mecánicos conforme a la Ley General para la Defensa de los Consumidores y Usuarios (Real Decreto Legislativo 1/2007). Quedan expresamente excluidos los desgastes naturales propios del uso, kilometraje y edad del vehículo (tales como neumáticos, pastillas de freno, embrague por desgaste o bombillas).
         </p>
         <p class="clause-p">
-          <strong>CUARTA. - TRÁFICO Y TRANSMISIÓN:</strong> El vendedor gestionará el cambio de titularidad del vehículo en la Jefatura Central de Tráfico (DGT), entregando al comprador el justificante provisional de circulación hasta la expedición del permiso de circulación definitivo a nombre del comprador.
+          <strong>CUARTA. - CAMBIO DE TITULARIDAD EN DGT:</strong> El vendedor se compromete a gestionar ante la Jefatura Central de Tráfico (DGT) el cambio de titularidad del vehículo a nombre del comprador mediante Gestoría Administrativa Colegiada, haciendo entrega al comprador del Justificante Provisional de Circulación oficial.
         </p>
       </div>
 
@@ -242,27 +258,25 @@ export function generateDocumentHtml(data: DocumentData): string {
         </div>
         <div class="signature-box">
           <strong>LA PARTE COMPRADORA</strong>
-          <span>${data.clientName} (DNI: ${data.clientDni})</span>
-          <div class="stamp-placeholder">Firma de Conformidad</div>
+          <span>${isBlank ? "Firma del Comprador" : data.clientName}</span>
+          <div class="stamp-placeholder">Firma y DNI</div>
         </div>
       </div>
 
       <div class="footer">
-        Contrato de Compraventa emitido en Alcalá de Henares (Madrid) por el software NexoCar para Orlando Cars.
+        Contrato de Compraventa oficial emitido para Orlando Cars S.L. Conforme al ordenamiento jurídico español.
       </div>
     `;
   }
 
   // 3. DOCUMENTO DE RESERVA Y ARRAS
   if (data.type === "reserva") {
-    const deposit = data.depositAmount || 500;
-    const remaining = total - deposit;
     return `
       <div class="header">
         <div>
           <div class="logo-text">ORLANDO <span>CARS</span></div>
           <div class="doc-title">DOCUMENTO DE RESERVA Y DEPÓSITO DE SEÑAL</div>
-          <div style="font-size: 12px; color: #475569;">Compromiso de Retirada de Stock y Compraventa</div>
+          <div style="font-size: 12px; color: #475569;">Bloqueo de Stock y Arras Penitenciales (Art. 1454 Código Civil)</div>
         </div>
         <div class="company-info">
           <strong>${companyName}</strong><br>
@@ -276,52 +290,52 @@ export function generateDocumentHtml(data: DocumentData): string {
         <div class="section-title">DATOS DEL VEHÍCULO RESERVADO</div>
         <div class="grid-2">
           <div>
-            <div class="info-row"><span class="info-label">Vehículo:</span><span class="info-value">${data.brand} ${data.model}</span></div>
-            <div class="info-row"><span class="info-label">Matrícula:</span><span class="info-value" style="font-family: monospace;">${data.plate}</span></div>
-            <div class="info-row"><span class="info-label">Bastidor:</span><span class="info-value" style="font-family: monospace;">${data.vin}</span></div>
+            <div class="info-row"><span class="info-label">Vehículo:</span><span class="info-value">${vBrand} ${vModel}</span></div>
+            <div class="info-row"><span class="info-label">Matrícula:</span><span class="info-value" style="font-family: monospace;">${vPlate}</span></div>
+            <div class="info-row"><span class="info-label">Bastidor (VIN):</span><span class="info-value" style="font-family: monospace;">${vVin}</span></div>
           </div>
           <div>
-            <div class="info-row"><span class="info-label">Kilometraje:</span><span class="info-value">${data.mileage.toLocaleString("es-ES")} km</span></div>
-            <div class="info-row"><span class="info-label">Precio Final Acordado:</span><span class="info-value" style="color: #2563eb;">${total.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</span></div>
+            <div class="info-row"><span class="info-label">Kilometraje:</span><span class="info-value">${vKm}</span></div>
+            <div class="info-row"><span class="info-label">Precio Total Pactado:</span><span class="info-value" style="color: #2563eb; font-weight: bold;">${vPrice}</span></div>
           </div>
         </div>
       </div>
 
       <div class="info-box section">
         <div class="section-title">DATOS DEL INTERESADO / COMPRADOR</div>
-        <div class="info-row"><span class="info-label">Nombre Completo:</span><span class="info-value">${data.clientName}</span></div>
-        <div class="info-row"><span class="info-label">DNI / NIE:</span><span class="info-value">${data.clientDni}</span></div>
-        <div class="info-row"><span class="info-label">Teléfono:</span><span class="info-value">${data.clientPhone || "+34 600 000 000"}</span></div>
+        <div class="info-row"><span class="info-label">Nombre y Apellidos:</span><span class="info-value">${cName}</span></div>
+        <div class="info-row"><span class="info-label">DNI / NIE:</span><span class="info-value">${cDni}</span></div>
+        <div class="info-row"><span class="info-label">Teléfono:</span><span class="info-value">${cPhone}</span></div>
       </div>
 
       <div class="section">
-        <div class="section-title">CONDICIONES DE LA RESERVA (ARRAS PENITENCIALES)</div>
+        <div class="section-title">ESTIPULACIONES DE LA RESERVA</div>
         <p class="clause-p">
-          1. El cliente entrega en concepto de <strong>SEÑAL Y RESERVA</strong> la cantidad de <strong>${deposit.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</strong>, comprometiéndose el concesionario a retirar el vehículo de la venta en todos los portales y mantenerlo reservado durante un plazo de <strong>15 días naturales</strong>.
+          1. El comprador entrega en este acto a la parte vendedora en concepto de <strong>SEÑAL Y RESERVA</strong> la cantidad de <strong>${vDeposit}</strong>, comprometiéndose el concesionario a retirar el vehículo de la exposición y portales de venta, manteniéndolo reservado durante un plazo de <strong>15 días naturales</strong>.
         </p>
         <p class="clause-p">
-          2. La cantidad restante de <strong>${remaining.toLocaleString("es-ES", { minimumFractionDigits: 2 })} €</strong> será liquidada íntegramente por el comprador en el momento de la firma del contrato definitivo y entrega.
+          2. La cantidad restante para completar el precio final acordado será abonada íntegramente por el comprador en el momento de la formalización del contrato definitivo y antes de la entrega física de las llaves.
         </p>
         <p class="clause-p">
-          3. Las partes pactan expresamente que las arras entregadas tienen la consideración de arras penitenciales conforme al <strong>artículo 1454 del Código Civil</strong> español.
+          3. Las partes pactan expresamente la condición de <strong>arras penitenciales según el artículo 1454 del Código Civil</strong>: si el comprador desiste de la adquisición perderá la cantidad entregada; si quien desiste es la parte vendedora, devolverá al comprador el duplo de la cantidad percibida.
         </p>
       </div>
 
       <div class="signatures">
         <div class="signature-box">
-          <strong>EL CONCESIONARIO</strong>
+          <strong>EL CONCESIONARIO (VENDEDOR)</strong>
           <span>${companyName}</span>
-          <div class="stamp-placeholder">Firma y Justificante de Cobro</div>
+          <div class="stamp-placeholder">Firma y Recibí de la Señal</div>
         </div>
         <div class="signature-box">
-          <strong>EL CLIENTE</strong>
-          <span>${data.clientName}</span>
+          <strong>EL COMPRADOR</strong>
+          <span>${isBlank ? "Firma del Interesado" : data.clientName}</span>
           <div class="stamp-placeholder">Firma de Aceptación</div>
         </div>
       </div>
 
       <div class="footer">
-        Reserva generada por el software NexoCar para Orlando Cars.
+        Documento de Reserva emitido por el sistema NexoCar para Orlando Cars S.L.
       </div>
     `;
   }
@@ -333,65 +347,71 @@ export function generateDocumentHtml(data: DocumentData): string {
         <div>
           <div class="logo-text">ORLANDO <span>CARS</span></div>
           <div class="doc-title">ACTA DE ENTREGA Y RECEPCIÓN DE VEHÍCULO</div>
-          <div style="font-size: 12px; color: #475569;">Checklist de Conformidad y Estado de Entrega</div>
+          <div style="font-size: 12px; color: #475569;">Checklist de Estado, 2 Llaves y Exención de Infracciones</div>
         </div>
         <div class="company-info">
           <strong>${companyName}</strong><br>
           ${companyAddress}<br>
-          Fecha y Hora: ${dateFormatted}
+          Fecha y Hora de Entrega: ${dateFormatted} a las _____ : _____ h
         </div>
       </div>
 
       <div class="info-box section">
         <div class="section-title">VEHÍCULO ENTREGADO</div>
-        <div class="info-row"><span class="info-label">Modelo:</span><span class="info-value">${data.brand} ${data.model}</span></div>
-        <div class="info-row"><span class="info-label">Matrícula:</span><span class="info-value" style="font-family: monospace;">${data.plate}</span></div>
-        <div class="info-row"><span class="info-label">Bastidor (VIN):</span><span class="info-value" style="font-family: monospace;">${data.vin}</span></div>
-        <div class="info-row"><span class="info-label">Kilómetros exactos en cuadro:</span><span class="info-value">${data.mileage.toLocaleString("es-ES")} km</span></div>
+        <div class="grid-2">
+          <div>
+            <div class="info-row"><span class="info-label">Marca y Modelo:</span><span class="info-value">${vBrand} ${vModel}</span></div>
+            <div class="info-row"><span class="info-label">Matrícula:</span><span class="info-value" style="font-family: monospace;">${vPlate}</span></div>
+          </div>
+          <div>
+            <div class="info-row"><span class="info-label">Bastidor (VIN):</span><span class="info-value" style="font-family: monospace;">${vVin}</span></div>
+            <div class="info-row"><span class="info-label">Kilómetros exactos en cuadro:</span><span class="info-value">${vKm}</span></div>
+          </div>
+        </div>
       </div>
 
       <div class="section">
-        <div class="section-title">CHECKLIST DE VERIFICACIÓN FÍSICA Y DOCUMENTAL</div>
+        <div class="section-title">CHECKLIST PERICIAL DE ENTREGA Y EQUIPAMIENTO</div>
         <table>
           <thead>
             <tr>
-              <th>Elemento Inspeccionado</th>
-              <th>Estado Verificado</th>
-              <th>Conformidad</th>
+              <th>Elemento Verificado</th>
+              <th>Estado Físico / Documental</th>
+              <th style="text-align: center;">Conformidad</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>Juegos de Llaves Originales</td><td>2 Llaves con mando a distancia</td><td style="color: #16a34a; font-weight: bold;">✓ CONFORME</td></tr>
-            <tr><td>Documentación y Ficha Técnica ITV</td><td>Original con ITV en vigor</td><td style="color: #16a34a; font-weight: bold;">✓ CONFORME</td></tr>
-            <tr><td>Manuales del Propietario y Libro</td><td>En guantera original</td><td style="color: #16a34a; font-weight: bold;">✓ CONFORME</td></tr>
-            <tr><td>Neumáticos y Llantas</td><td>Dibujo superior a 3.5mm legal</td><td style="color: #16a34a; font-weight: bold;">✓ CONFORME</td></tr>
-            <tr><td>Kit de Emergencia / Rueda</td><td>Chaleco, triángulos y kit sellado</td><td style="color: #16a34a; font-weight: bold;">✓ CONFORME</td></tr>
-            <tr><td>Carrocería e Interiores</td><td>Lavado integral y reacondicionado</td><td style="color: #16a34a; font-weight: bold;">✓ CONFORME</td></tr>
+            <tr><td>Juego de Llaves Originales</td><td>2 Mandos a distancia operativos</td><td style="text-align: center; color: #16a34a; font-weight: bold;">[ X ] CONFORME</td></tr>
+            <tr><td>Ficha Técnica y Permiso de Circulación</td><td>Original con ITV en vigor</td><td style="text-align: center; color: #16a34a; font-weight: bold;">[ X ] CONFORME</td></tr>
+            <tr><td>Manuales del Propietario</td><td>En guantera original</td><td style="text-align: center; color: #16a34a; font-weight: bold;">[ X ] CONFORME</td></tr>
+            <tr><td>Neumáticos y Llantas</td><td>Profundidad superior a 3.5 mm reglamentario</td><td style="text-align: center; color: #16a34a; font-weight: bold;">[ X ] CONFORME</td></tr>
+            <tr><td>Kit de Seguridad / Rueda</td><td>Chaleco reflectante, triángulos y kit sellado</td><td style="text-align: center; color: #16a34a; font-weight: bold;">[ X ] CONFORME</td></tr>
+            <tr><td>Carrocería, Lunas y Pintura</td><td>Lavado integral y reacondicionamiento revisado</td><td style="text-align: center; color: #16a34a; font-weight: bold;">[ X ] CONFORME</td></tr>
           </tbody>
         </table>
       </div>
 
-      <div class="section" style="margin-top: 20px;">
+      <div class="section" style="margin-top: 15px;">
         <p class="clause-p">
-          El cliente receptor manifiesta haber examinado a su plena satisfacción el vehículo, comprobado el funcionamiento de sus mandos, luces y climatización, y recibe en este acto la posesión física y llaves del mismo en perfecto estado de funcionamiento, asumiendo la responsabilidad de su circulación desde este momento.
+          El adquirente manifiesta haber examinado a su plena satisfacción el vehículo, comprobado el funcionamiento de sus mandos, alumbrado, niveles y climatización, y recibe en este acto la posesión física, documentación y llaves del mismo, asumiendo cualquier responsabilidad derivada de su circulación, infracciones o sanciones a partir de la fecha y hora indicadas.
         </p>
       </div>
 
       <div class="signatures">
         <div class="signature-box">
-          <strong>ENTREGADO POR</strong>
-          <span>Responsable de Campa / Entregas</span>
-          <div class="stamp-placeholder">Firma Orlando Cars</div>
+          <strong>ENTREGADO POR EL CONCESIONARIO</strong>
+          <span>Responsable de Entrega Orlando Cars</span>
+          <div class="stamp-placeholder">Firma y Sello</div>
         </div>
         <div class="signature-box">
-          <strong>RECIBIDO Y CONFORME</strong>
-          <span>${data.clientName} (DNI: ${data.clientDni})</span>
+          <strong>RECIBIDO Y CONFORME (CLIENTE)</strong>
+          <span>${cName}</span>
           <div class="stamp-placeholder">Firma del Adquirente</div>
         </div>
       </div>
 
       <div class="footer">
-        Acta de Entrega de NexoCar para Orlando Cars.
+        Acta oficial de entrega de Orlando Cars S.L. Expedida por NexoCar.
       </div>
     `;
   }
@@ -403,7 +423,7 @@ export function generateDocumentHtml(data: DocumentData): string {
         <div>
           <div class="logo-text">ORLANDO <span>CARS</span></div>
           <div class="doc-title">CERTIFICADO DE PÓLIZA DE GARANTÍA MECÁNICA (12 MESES)</div>
-          <div style="font-size: 12px; color: #475569;">Cobertura de Reparaciones para Vehículos de Ocasión</div>
+          <div style="font-size: 12px; color: #475569;">Cobertura Oficial Conforme a la Ley de Consumidores y Usuarios</div>
         </div>
         <div class="company-info">
           <strong>${companyName}</strong><br>
@@ -414,16 +434,16 @@ export function generateDocumentHtml(data: DocumentData): string {
 
       <div class="grid-2 section">
         <div class="info-box">
-          <div class="section-title">TITULAR DE LA GARANTÍA</div>
-          <div class="info-row"><span class="info-label">Beneficiario:</span><span class="info-value">${data.clientName}</span></div>
-          <div class="info-row"><span class="info-label">DNI / CIF:</span><span class="info-value">${data.clientDni}</span></div>
-          <div class="info-row"><span class="info-label">Teléfono:</span><span class="info-value">${data.clientPhone || "+34 600 000 000"}</span></div>
+          <div class="section-title">TITULAR BENEFICIARIO</div>
+          <div class="info-row"><span class="info-label">Nombre del Titular:</span><span class="info-value">${cName}</span></div>
+          <div class="info-row"><span class="info-label">DNI / NIE:</span><span class="info-value">${cDni}</span></div>
+          <div class="info-row"><span class="info-label">Teléfono:</span><span class="info-value">${cPhone}</span></div>
         </div>
         <div class="info-box">
-          <div class="section-title">VEHÍCULO ASEGURADO</div>
-          <div class="info-row"><span class="info-label">Matrícula:</span><span class="info-value" style="font-family: monospace;">${data.plate}</span></div>
-          <div class="info-row"><span class="info-label">Bastidor:</span><span class="info-value" style="font-family: monospace;">${data.vin}</span></div>
-          <div class="info-row"><span class="info-label">Km Inicial:</span><span class="info-value">${data.mileage.toLocaleString("es-ES")} km</span></div>
+          <div class="section-title">VEHÍCULO AMPARADO EN PÓLIZA</div>
+          <div class="info-row"><span class="info-label">Matrícula:</span><span class="info-value" style="font-family: monospace;">${vPlate}</span></div>
+          <div class="info-row"><span class="info-label">Bastidor (VIN):</span><span class="info-value" style="font-family: monospace;">${vVin}</span></div>
+          <div class="info-row"><span class="info-label">Kilometraje Inicial:</span><span class="info-value">${vKm}</span></div>
         </div>
       </div>
 
@@ -432,25 +452,25 @@ export function generateDocumentHtml(data: DocumentData): string {
         <table>
           <thead>
             <tr>
-              <th>Órgano Mecánico</th>
-              <th>Componentes Cubiertos al 100%</th>
-              <th>Límite de Siniestro</th>
+              <th>Grupo Mecánico</th>
+              <th>Componentes Cubiertos (Piezas y Mano de Obra)</th>
+              <th>Límite de Reparación</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>Motor</td><td>Bloque, culata, pistones, bielas, cigüeñal, árbol de levas y bomba de aceite</td><td>Hasta valor venal</td></tr>
+            <tr><td>Motor</td><td>Bloque motor, culata, pistones, bielas, cigüeñal, árbol de levas y bomba de aceite</td><td>Hasta valor venal</td></tr>
             <tr><td>Caja de Cambios</td><td>Engranajes, sincronizadores, convertidor de par y mecatrónica (DSG/Auto)</td><td>Hasta valor venal</td></tr>
-            <tr><td>Sobrealimentación</td><td>Turbocompresor, válvula wastegate y actuador geométrico</td><td>Hasta valor venal</td></tr>
-            <tr><td>Sistema de Inyección</td><td>Bomba de alta presión e inyectores diésel / gasolina</td><td>Hasta 2.500 €</td></tr>
-            <tr><td>Circuito de Refrigeración</td><td>Radiador, bomba de agua y termostato</td><td>Pieza y mano obra</td></tr>
-            <tr><td>Dirección y Frenos</td><td>Bomba de servodirección, cremallera, módulo ABS y servofreno</td><td>Pieza y mano obra</td></tr>
+            <tr><td>Sobrealimentación</td><td>Turbocompresor, válvula wastegate y actuador de geometría variable</td><td>Hasta valor venal</td></tr>
+            <tr><td>Inyección / Combustible</td><td>Bomba de alta presión inyectora e inyectores diésel / gasolina</td><td>Hasta 2.500 €</td></tr>
+            <tr><td>Circuito de Refrigeración</td><td>Radiador de refrigeración, bomba de agua y termostato</td><td>Pieza y mano de obra</td></tr>
+            <tr><td>Dirección y Frenos</td><td>Bomba de servodirección, cremallera, módulo ABS y servofreno</td><td>Pieza y mano de obra</td></tr>
           </tbody>
         </table>
       </div>
 
       <div class="section" style="margin-top: 15px;">
         <p class="clause-p">
-          <strong>Condiciones de Activación:</strong> La presente garantía surte efecto desde el momento de la entrega física del vehículo y tiene una duración de <strong>365 días naturales</strong>. Para cualquier incidencia, el beneficiario deberá contactar previamente con el Servicio de Atención al Cliente de Orlando Cars antes de cualquier desmontaje.
+          <strong>Condiciones de Activación:</strong> La presente garantía surte efecto desde el momento de la entrega física del vehículo y tiene una duración improrrogable de <strong>365 días naturales</strong>. Para cualquier incidencia, el beneficiario deberá contactar previamente con Orlando Cars antes de cualquier desmontaje.
         </p>
       </div>
 
@@ -458,12 +478,12 @@ export function generateDocumentHtml(data: DocumentData): string {
         <div class="signature-box">
           <strong>CONCESIONARIO EMISOR</strong>
           <span>${companyName}</span>
-          <div class="stamp-placeholder">Sello y Firma GarantiPLUS</div>
+          <div class="stamp-placeholder">Sello y Firma Oficial</div>
         </div>
         <div class="signature-box">
-          <strong>CONFORMIDAD DEL BENEFICIARIO</strong>
-          <span>${data.clientName}</span>
-          <div class="stamp-placeholder">Firma de Recepción</div>
+          <strong>EL BENEFICIARIO</strong>
+          <span>${isBlank ? "Firma del Titular" : data.clientName}</span>
+          <div class="stamp-placeholder">Firma de Conformidad</div>
         </div>
       </div>
     `;
@@ -476,7 +496,7 @@ export function generateDocumentHtml(data: DocumentData): string {
         <div>
           <div class="logo-text">ORLANDO <span>CARS</span></div>
           <div class="doc-title">MANDATO DE REPRESENTACIÓN PARA TRÁMITES ANTE LA DGT</div>
-          <div style="font-size: 12px; color: #475569;">Colegio Oficial de Gestores Administrativos de Madrid</div>
+          <div style="font-size: 12px; color: #475569;">Modelo Homologado por el Colegio Oficial de Gestores Administrativos</div>
         </div>
         <div class="company-info">
           <strong>${companyName}</strong><br>
@@ -488,15 +508,15 @@ export function generateDocumentHtml(data: DocumentData): string {
       <div class="section">
         <div class="section-title">OTORGANTE (MANDANTE)</div>
         <p class="clause-p">
-          D./Dña. <strong>${data.clientName}</strong>, con DNI/NIE <strong>${data.clientDni}</strong>, con domicilio en ${data.clientAddress || "Calle Principal 14, Madrid"}, en calidad de adquirente legítimo.
+          D./Dña. <strong>${cName}</strong>, con DNI/NIE <strong>${cDni}</strong>, con domicilio en ${cAddress}.
         </p>
         <div class="section-title" style="margin-top: 15px;">MANDATARIO (GESTORÍA Y CONCESIONARIO)</div>
         <p class="clause-p">
-          A la entidad mercantil <strong>${companyName}</strong> y a los Gestores Administrativos Colegiados designados por la misma.
+          A la entidad mercantil <strong>${companyName}</strong> y a los Gestores Administrativos Colegiados autorizados por la misma.
         </p>
         <div class="section-title" style="margin-top: 15px;">OBJETO DEL MANDATO TELEMÁTICO</div>
         <p class="clause-p">
-          Para que en su nombre y representación realice ante la Jefatura Provincial de Tráfico todas las actuaciones relativas al <strong>CAMBIO DE TITULARIDAD / TRANSFERENCIA VEHICULAR</strong> del vehículo con matrícula <strong>${data.plate}</strong> y número de bastidor <strong>${data.vin}</strong>, así como para la retirada del permiso de circulación definitivo e informe telemático DGT.
+          Para que en su nombre y representación realice ante la Jefatura Provincial de Tráfico todas las actuaciones relativas al <strong>CAMBIO DE TITULARIDAD / TRANSFERENCIA VEHICULAR</strong> del vehículo con matrícula <strong>${vPlate}</strong> y número de bastidor <strong>${vVin}</strong>, así como para la retirada del permiso de circulación definitivo e informe telemático DGT.
         </p>
       </div>
 
@@ -508,8 +528,8 @@ export function generateDocumentHtml(data: DocumentData): string {
         </div>
         <div class="signature-box">
           <strong>EL MANDANTE (CLIENTE)</strong>
-          <span>${data.clientName}</span>
-          <div class="stamp-placeholder">Firma del Adquirente</div>
+          <span>${isBlank ? "Firma del Adquirente" : data.clientName}</span>
+          <div class="stamp-placeholder">Firma y DNI</div>
         </div>
       </div>
     `;
@@ -535,14 +555,14 @@ export function generateDocumentHtml(data: DocumentData): string {
       <div class="info-box">
         <div class="grid-2">
           <div>
-            <div class="info-row"><span class="info-label">Matrícula:</span><span class="info-value" style="font-family: monospace;">${data.plate}</span></div>
-            <div class="info-row"><span class="info-label">Nº Bastidor:</span><span class="info-value" style="font-family: monospace;">${data.vin}</span></div>
-            <div class="info-row"><span class="info-label">Marca y Modelo:</span><span class="info-value">${data.brand} ${data.model}</span></div>
+            <div class="info-row"><span class="info-label">Matrícula:</span><span class="info-value" style="font-family: monospace;">${vPlate}</span></div>
+            <div class="info-row"><span class="info-label">Nº Bastidor:</span><span class="info-value" style="font-family: monospace;">${vVin}</span></div>
+            <div class="info-row"><span class="info-label">Marca y Modelo:</span><span class="info-value">${vBrand} ${vModel}</span></div>
           </div>
           <div>
             <div class="info-row"><span class="info-label">Fecha Venta:</span><span class="info-value">${dateFormatted}</span></div>
-            <div class="info-row"><span class="info-label">Comprador:</span><span class="info-value">${data.clientName}</span></div>
-            <div class="info-row"><span class="info-label">DNI Comprador:</span><span class="info-value">${data.clientDni}</span></div>
+            <div class="info-row"><span class="info-label">Comprador:</span><span class="info-value">${cName}</span></div>
+            <div class="info-row"><span class="info-label">DNI Comprador:</span><span class="info-value">${cDni}</span></div>
           </div>
         </div>
       </div>
@@ -556,23 +576,23 @@ export function generateDocumentHtml(data: DocumentData): string {
 
     <div class="signatures" style="margin-top: 50px;">
       <div class="signature-box">
-        <strong>EL TRANSMITENTE</strong>
+        <strong>EL TRANSMITENTE (VENDEDOR)</strong>
         <span>${companyName}</span>
         <div class="stamp-placeholder">Firma y Sello</div>
       </div>
       <div class="signature-box">
-        <strong>EL ADQUIRENTE</strong>
-        <span>${data.clientName}</span>
-        <div class="stamp-placeholder">Firma Notificado</div>
+        <strong>EL ADQUIRENTE (NOTIFICADO)</strong>
+        <span>${isBlank ? "Firma del Comprador" : data.clientName}</span>
+        <div class="stamp-placeholder">Firma y DNI</div>
       </div>
     </div>
   `;
 }
 
-// Función para descargar directamente como archivo Word (.doc) editable
+// Descarga en Word (.doc) editable
 export function downloadDocumentWord(data: DocumentData): void {
   const bodyHtml = generateDocumentHtml(data);
-  const title = `${data.type.toUpperCase()}_${data.plate.replace("-", "")}`;
+  const title = `${data.type.toUpperCase()}_${data.isBlank ? "PLANTILLA_BLANCO" : (data.plate || "VEHICULO").replace("-", "")}`;
 
   const wordHtml = `
     <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -622,9 +642,9 @@ export function downloadDocumentWord(data: DocumentData): void {
   URL.revokeObjectURL(url);
 }
 
-// Función para descargar como HTML autónomo imprimible o abrir diálogo nativo
+// Descarga en archivo HTML imprimible
 export function downloadDocumentHtml(data: DocumentData): void {
-  const title = `${data.type.toUpperCase()}_${data.plate.replace("-", "")}`;
+  const title = `${data.type.toUpperCase()}_${data.isBlank ? "PLANTILLA_BLANCO" : (data.plate || "VEHICULO").replace("-", "")}`;
   const bodyHtml = generateDocumentHtml(data);
 
   const fullHtml = `
@@ -636,15 +656,7 @@ export function downloadDocumentHtml(data: DocumentData): void {
         <style>
           @page { size: A4 portrait; margin: 12mm 15mm; }
           * { box-sizing: border-box; }
-          body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            color: #0f172a; 
-            margin: 0; 
-            padding: 24px; 
-            font-size: 12.5px; 
-            line-height: 1.5; 
-            background: #ffffff; 
-          }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #0f172a; margin: 0; padding: 24px; font-size: 12.5px; line-height: 1.5; background: #ffffff; }
           .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 20px; }
           .logo-text { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; color: #0f172a; }
           .logo-text span { color: #0284c7; }
@@ -669,16 +681,12 @@ export function downloadDocumentHtml(data: DocumentData): void {
           .signature-box strong { display: block; font-size: 12px; color: #0f172a; margin-bottom: 2px; }
           .stamp-placeholder { height: 60px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-style: italic; font-size: 11px; }
           .footer { margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 9.5px; color: #94a3b8; text-align: center; }
-          @media print {
-            body { padding: 0; background: transparent; }
-          }
+          @media print { body { padding: 0; background: transparent; } }
         </style>
       </head>
       <body>
         ${bodyHtml}
-        <script>
-          window.onload = function() { window.print(); };
-        </script>
+        <script>window.onload = function() { window.print(); };</script>
       </body>
     </html>
   `;
@@ -694,14 +702,13 @@ export function downloadDocumentHtml(data: DocumentData): void {
   URL.revokeObjectURL(url);
 }
 
-// Función para abrir en nueva pestaña con diálogo de impresión directo
+// Abrir en nueva ventana e imprimir directo
 export function openPrintDocument(data: DocumentData): void {
-  const title = `${data.type.toUpperCase()} - ${data.brand} ${data.model} (${data.plate})`;
+  const title = `${data.type.toUpperCase()} - ${data.isBlank ? "PLANTILLA OFICIAL EN BLANCO" : `${data.brand || ""} (${data.plate || ""})`}`;
   const bodyHtml = generateDocumentHtml(data);
 
   const printWindow = window.open("", "_blank", "width=900,height=1100");
   if (!printWindow) {
-    // Si el navegador bloqueó la ventana emergente, fallback a descarga directa
     downloadDocumentHtml(data);
     return;
   }
@@ -757,7 +764,6 @@ export function openPrintDocument(data: DocumentData): void {
           .stamp-placeholder { height: 60px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-style: italic; font-size: 11px; }
           .footer { margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 9.5px; color: #94a3b8; text-align: center; }
           
-          /* Toolbar */
           .toolbar {
             max-width: 800px;
             margin: 0 auto 16px auto;
@@ -784,10 +790,7 @@ export function openPrintDocument(data: DocumentData): void {
             align-items: center;
             gap: 6px;
           }
-          .toolbar-btn:hover {
-            background: #1d4ed8;
-            transform: translateY(-1px);
-          }
+          .toolbar-btn:hover { background: #1d4ed8; }
           @media print {
             .no-print { display: none !important; }
             body { padding: 0; background: transparent; }
@@ -798,11 +801,11 @@ export function openPrintDocument(data: DocumentData): void {
       <body>
         <div class="toolbar no-print">
           <div>
-            <div style="font-weight: 800; font-size: 13px;">Documento Oficial Listo — NexoCar</div>
-            <div style="font-size: 11px; color: #94a3b8;">Pulse para imprimir o descargar como archivo PDF</div>
+            <div style="font-weight: 800; font-size: 13px;">${data.isBlank ? "Plantilla Oficial en Blanco" : "Documento Oficial"} — Orlando Cars</div>
+            <div style="font-size: 11px; color: #94a3b8;">Listo para imprimir en A4 o guardar en PDF</div>
           </div>
           <button class="toolbar-btn" onclick="window.print()">
-            <span>🖨️ Imprimir / Guardar como PDF</span>
+            <span>🖨️ Imprimir / Guardar en PDF</span>
           </button>
         </div>
         
