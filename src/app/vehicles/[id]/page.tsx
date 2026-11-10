@@ -52,6 +52,8 @@ import {
   toggleVehiclePortalPublication,
 } from "@/lib/storage";
 import { Vehicle, PortalPublication } from "@/types";
+import { DocumentModal } from "@/components/documents/document-modal";
+import { DocumentData, openPrintDocument } from "@/lib/document-generator";
 
 export default function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -83,6 +85,40 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
   const [studioStatusText, setStudioStatusText] = useState("");
   const [activeEnhancement, setActiveEnhancement] = useState<"none" | "scratch_removed" | "showroom" | "plate_cover">("none");
   const [showOriginal, setShowOriginal] = useState(false);
+  const [docModalOpen, setDocModalOpen] = useState(false);
+  const [selectedDocData, setSelectedDocData] = useState<DocumentData | null>(null);
+
+  const getVehicleDocData = (type: "contrato" | "factura" | "reserva" | "entrega"): DocumentData => {
+    return {
+      type,
+      invoiceNumber: `FAC-2026-V${vehicle.plate.replace("-", "")}`,
+      clientName: matchedLeads.length > 0 ? matchedLeads[0].customer_name : "Cliente Comprador",
+      clientDni: "53892104M",
+      clientPhone: matchedLeads.length > 0 ? matchedLeads[0].customer_phone : "+34 600 000 000",
+      brand: vehicle.brand,
+      model: vehicle.model,
+      version: vehicle.version,
+      plate: vehicle.plate,
+      vin: vehicle.vin,
+      mileage: vehicle.mileage,
+      year: vehicle.year,
+      fuelType: vehicle.fuel_type,
+      color: vehicle.color,
+      sellingPrice: vehicle.selling_price,
+      depositAmount: 500,
+      taxScheme: "REBU",
+      paymentMethod: "Transferencia Bancaria",
+    };
+  };
+
+  const handleOpenDoc = (type: "contrato" | "factura" | "reserva" | "entrega") => {
+    setSelectedDocData(getVehicleDocData(type));
+    setDocModalOpen(true);
+  };
+
+  const handlePrintDoc = (type: "contrato" | "factura" | "reserva" | "entrega") => {
+    openPrintDocument(getVehicleDocData(type));
+  };
 
   const vehicleExpenses = mockExpenses.filter((e) => e.vehicle_id === vehicle.id);
   const matchedLeads = mockLeads.filter((l) => l.vehicle_id === vehicle.id);
@@ -883,32 +919,88 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
       {/* TAB CONTENT: Docs */}
       {activeTab === "docs" && (
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-            Expediente Digital del Vehículo
-          </h3>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                Expediente Digital del Vehículo
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Genera, visualiza e imprime contratos, facturas y reservas vinculadas a la matrícula {vehicle.plate}
+              </p>
+            </div>
+            <button
+              onClick={() => handleOpenDoc("contrato")}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Contrato de Venta</span>
+            </button>
+          </div>
+
           <div className="space-y-2 text-xs">
             {[
-              { name: "Contrato de Compraventa Oficial (REBU)", status: "Generado", icon: FileText },
-              { name: "Ficha Técnica y Permiso de Circulación (DGT)", status: "Verificado", icon: ShieldCheck },
-              { name: "Póliza Garantía Mecánica 12 Meses GarantiPLUS", status: "Emitida", icon: CheckCircle },
-              { name: "Hoja de Entrega y Recepción de Vehículo", status: "Borrador", icon: FileText },
-            ].map((doc, idx) => {
+              {
+                id: "contrato",
+                type: "contrato" as const,
+                name: "Contrato de Compraventa Oficial VO (REBU)",
+                status: "Oficial 12 Meses Garantía",
+                icon: FileText,
+              },
+              {
+                id: "factura",
+                type: "factura" as const,
+                name: `Factura Ordinaria REBU (${vehicle.selling_price.toLocaleString("es-ES")} €)`,
+                status: "Venta Inmediata",
+                icon: Receipt,
+              },
+              {
+                id: "reserva",
+                type: "reserva" as const,
+                name: "Documento de Reserva y Señal (500 €)",
+                status: "Arras Penitenciales",
+                icon: CheckCircle,
+              },
+              {
+                id: "entrega",
+                type: "entrega" as const,
+                name: "Acta de Entrega y Recepción con Checklist",
+                status: "2 Llaves + ITV",
+                icon: ShieldCheck,
+              },
+            ].map((doc) => {
               const Icon = doc.icon;
               return (
                 <div
-                  key={idx}
-                  className="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800/80"
+                  key={doc.id}
+                  className="flex items-center justify-between p-3.5 rounded-xl bg-slate-950 border border-slate-800/80 hover:border-slate-700 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className="w-4 h-4 text-blue-400" />
-                    <span className="font-semibold text-slate-200">{doc.name}</span>
+                    <div className="p-2 rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="font-semibold text-slate-200 block">{doc.name}</span>
+                      <span className="text-[10px] text-slate-500">{doc.status}</span>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => alert(`Descargando documento PDF: ${doc.name}`)}
-                    className="px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:text-white text-xs"
-                  >
-                    Descargar PDF
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleOpenDoc(doc.type)}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs font-medium flex items-center gap-1 hover:bg-slate-700 transition-colors"
+                      title="Ver en Pantalla"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Ver</span>
+                    </button>
+                    <button
+                      onClick={() => handlePrintDoc(doc.type)}
+                      className="px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white text-xs font-semibold flex items-center gap-1 transition-colors"
+                      title="Imprimir o Descargar como PDF"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>PDF</span>
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -946,6 +1038,14 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
         </div>
+      )}
+
+      {selectedDocData && (
+        <DocumentModal
+          isOpen={docModalOpen}
+          onClose={() => setDocModalOpen(false)}
+          initialData={selectedDocData}
+        />
       )}
     </div>
   );

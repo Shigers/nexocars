@@ -1,16 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { BadgeDollarSign, CheckCircle2, FileText, ArrowUpRight, Plus, Download } from "lucide-react";
+import { BadgeDollarSign, CheckCircle2, FileText, ArrowUpRight, Plus, Download, Printer, Eye } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { DocumentModal } from "@/components/documents/document-modal";
+import { DocumentData, openPrintDocument } from "@/lib/document-generator";
 
 export default function SalesPage() {
   const [sales] = useState([
     {
       id: "sale-01",
       vehicle: "Volkswagen Golf 8 1.5 eTSI R-Line",
+      brand: "Volkswagen",
+      model: "Golf 8 1.5 eTSI R-Line",
       plate: "5672-LTT",
+      vin: "WVWZZZCDZMW104928",
       customer: "Raúl Benítez Gómez",
+      dni: "53892104M",
       phone: "+34 655 432 109",
       date: "2026-10-25",
       agreedPrice: 25900,
@@ -22,8 +28,12 @@ export default function SalesPage() {
     {
       id: "sale-02",
       vehicle: "Seat León FR 2.0 TDI 150CV DSG",
+      brand: "Seat",
+      model: "León FR 2.0 TDI 150CV DSG",
       plate: "8120-LKR",
+      vin: "VSSZZZKLZNR049281",
       customer: "Elena Serrano Cruz",
+      dni: "48201934P",
       phone: "+34 677 889 001",
       date: "2026-10-14",
       agreedPrice: 21900,
@@ -33,6 +43,38 @@ export default function SalesPage() {
       status: "completada",
     },
   ]);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDocData, setSelectedDocData] = useState<DocumentData | null>(null);
+
+  const getSaleDocData = (s: typeof sales[0], type: "contrato" | "factura"): DocumentData => {
+    return {
+      type,
+      invoiceNumber: `FAC-2026-${s.id === "sale-01" ? "089" : "088"}`,
+      date: formatDate(s.date),
+      clientName: s.customer,
+      clientDni: s.dni,
+      clientPhone: s.phone,
+      brand: s.brand,
+      model: s.model,
+      plate: s.plate,
+      vin: s.vin,
+      mileage: s.id === "sale-01" ? 45000 : 58000,
+      year: s.id === "sale-01" ? 2022 : 2021,
+      sellingPrice: s.agreedPrice,
+      taxScheme: "REBU",
+      paymentMethod: s.paymentMethod,
+    };
+  };
+
+  const handleOpenDoc = (s: typeof sales[0], type: "contrato" | "factura") => {
+    setSelectedDocData(getSaleDocData(s, type));
+    setModalOpen(true);
+  };
+
+  const handlePrintDoc = (s: typeof sales[0], type: "contrato" | "factura") => {
+    openPrintDocument(getSaleDocData(s, type));
+  };
 
   const totalSales = sales.reduce((acc, s) => acc + s.agreedPrice, 0);
   const totalMargin = sales.reduce((acc, s) => acc + s.grossMargin, 0);
@@ -53,11 +95,14 @@ export default function SalesPage() {
         </div>
 
         <button
-          onClick={() => alert("Registrar nueva operación de venta...")}
+          onClick={() => {
+            setSelectedDocData(getSaleDocData(sales[0], "contrato"));
+            setModalOpen(true);
+          }}
           className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all self-start md:self-auto"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>Registrar Venta</span>
+          <span>Generar Nuevo Contrato</span>
         </button>
       </div>
 
@@ -72,7 +117,7 @@ export default function SalesPage() {
               <th className="py-3 px-3">Coste Congelado</th>
               <th className="py-3 px-3">Precio Final</th>
               <th className="py-3 px-3">Margen Bruto REBU</th>
-              <th className="py-3 px-4 text-right">Expediente</th>
+              <th className="py-3 px-4 text-center">Expediente Oficial</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60 text-slate-200">
@@ -97,20 +142,39 @@ export default function SalesPage() {
                 <td className="py-3 px-3 font-black text-emerald-400">
                   +{formatCurrency(s.grossMargin)}
                 </td>
-                <td className="py-3 px-4 text-right">
-                  <button
-                    onClick={() => alert(`Descargando contrato de venta para ${s.plate}`)}
-                    className="p-1.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-colors"
-                    title="Descargar Contrato Compraventa"
-                  >
-                    <FileText className="w-4 h-4" />
-                  </button>
+                <td className="py-3 px-4 text-center">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <button
+                      onClick={() => handleOpenDoc(s, "contrato")}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white transition-colors font-medium text-[11px]"
+                      title="Abrir Contrato Compraventa Oficial"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Contrato</span>
+                    </button>
+                    <button
+                      onClick={() => handlePrintDoc(s, "factura")}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white transition-colors font-medium text-[11px]"
+                      title="Descargar / Imprimir Factura REBU en PDF"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>Factura PDF</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {selectedDocData && (
+        <DocumentModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          initialData={selectedDocData}
+        />
+      )}
     </div>
   );
 }
