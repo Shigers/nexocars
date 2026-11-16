@@ -5,8 +5,8 @@ import { mockVehicles, mockLeads, mockExpenses, mockAppointments, mockPortals } 
 import { supabase, isSupabaseConfigured } from "./supabase";
 
 const STORAGE_KEYS = {
-  VEHICLES: "nexo_car_vehicles_v1",
-  LEADS: "nexo_car_leads_v1",
+  VEHICLES: "nexo_car_vehicles_v3",
+  LEADS: "nexo_car_leads_v2",
   EXPENSES: "nexo_car_expenses_v1",
   APPOINTMENTS: "nexo_car_appointments_v1",
   PORTALS: "nexo_car_portals_v1",
@@ -19,6 +19,14 @@ let hasFetchedFromSupabase = false;
 // ---------------------------------------------------------------------------
 // VEHICLES PERSISTENCE (Hybrid Offline-First + PostgreSQL Cloud Sync)
 // ---------------------------------------------------------------------------
+export function resetVehiclesToDefault(): Vehicle[] {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(mockVehicles));
+    window.dispatchEvent(new Event("nexo_storage_updated"));
+  }
+  return mockVehicles;
+}
+
 export function getStoredVehicles(): Vehicle[] {
   if (typeof window === "undefined") return mockVehicles;
 
@@ -29,10 +37,69 @@ export function getStoredVehicles(): Vehicle[] {
       .from("vehicles")
       .select("*")
       .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (!error && data && data.length > 0) {
-          localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(data));
+      .then(async ({ data, error }) => {
+        if (!error && data) {
+          const dbVehicles = data as Vehicle[];
+          const existingIds = new Set(dbVehicles.map((d) => d.id));
+          const existingPlates = new Set(dbVehicles.map((d) => d.plate));
+
+          // Retain mockVehicles that aren't in Supabase yet (e.g. Loewe fleet)
+          const missingMocks = mockVehicles.filter(
+            (m) => !existingIds.has(m.id) && !existingPlates.has(m.plate)
+          );
+
+          const combined = [...dbVehicles, ...missingMocks];
+          localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(combined));
           window.dispatchEvent(new Event("nexo_storage_updated"));
+
+          // Automatically sync missing Loewe and Orlando vehicles to Supabase PostgreSQL
+          if (missingMocks.length > 0 && supabase) {
+            for (const v of missingMocks) {
+              try {
+                await supabase.from("vehicles").upsert({
+                  id: v.id,
+                  company_id: v.company_id || "comp-orlando",
+                  brand: v.brand,
+                  model: v.model,
+                  version: v.version,
+                  plate: v.plate,
+                  vin: v.vin,
+                  year: v.year,
+                  mileage: v.mileage,
+                  fuel_type: v.fuel_type,
+                  transmission: v.transmission,
+                  power_hp: v.power_hp,
+                  color: v.color,
+                  doors: v.doors || 5,
+                  seats: v.seats || 5,
+                  environmental_badge: v.environmental_badge,
+                  body_type: v.body_type,
+                  purchase_price: v.purchase_price,
+                  preparation_costs: v.preparation_costs,
+                  additional_costs: v.additional_costs,
+                  total_cost: v.total_cost,
+                  selling_price: v.selling_price,
+                  financed_price: v.financed_price,
+                  min_selling_price: v.min_selling_price,
+                  tax_scheme: v.tax_scheme,
+                  status: v.status,
+                  location: v.location,
+                  purchase_date: v.purchase_date,
+                  supplier_name: v.supplier_name,
+                  title: v.title,
+                  description: v.description,
+                  images: v.images,
+                  equipment_list: v.equipment_list,
+                  is_featured: v.is_featured,
+                  published_on_web: v.published_on_web,
+                  days_in_stock: v.days_in_stock,
+                  created_at: v.created_at,
+                });
+              } catch (e) {
+                // Ignore silent network upsert errors
+              }
+            }
+          }
         }
       });
   }

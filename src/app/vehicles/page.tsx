@@ -23,6 +23,7 @@ import {
   X,
   Trash2,
   Camera,
+  RotateCw,
 } from "lucide-react";
 import { VehicleStatus, FuelType, Vehicle } from "@/types";
 import {
@@ -34,7 +35,7 @@ import {
   calculateRealCurrentMargin,
 } from "@/lib/utils";
 import { vehicleMargin, urgencyReport } from "@/lib/finance";
-import { getStoredVehicles, bulkImportVehicles, deleteVehicle, saveVehicle } from "@/lib/storage";
+import { getStoredVehicles, bulkImportVehicles, deleteVehicle, saveVehicle, resetVehiclesToDefault } from "@/lib/storage";
 
 export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -190,7 +191,21 @@ export default function VehiclesPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Force Reload / Sync Full Stock */}
+          <button
+            onClick={() => {
+              const fresh = resetVehiclesToDefault();
+              setVehicles(fresh);
+              alert("¡Flota completa sincronizada (14 vehículos de Orlando Cars y Loewe Cars)!");
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 text-xs font-semibold transition-all"
+            title="Recargar flota completa oficial de Orlando Cars y Loewe Cars"
+          >
+            <RotateCw className="w-3.5 h-3.5" />
+            <span>Sincronizar Flota (14)</span>
+          </button>
+
           {/* Bulk Import Button */}
           <button
             onClick={() => setImportModalOpen(true)}
