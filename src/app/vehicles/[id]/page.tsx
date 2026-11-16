@@ -57,7 +57,12 @@ import { DocumentData, openPrintDocument } from "@/lib/document-generator";
 
 export default function VehicleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehicles);
+  const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
+    if (typeof window !== "undefined") {
+      return getStoredVehicles();
+    }
+    return [];
+  });
   const [portals, setPortals] = useState<PortalPublication[]>(mockPortals);
   const [portalMatrix, setPortalMatrix] = useState<Record<string, Record<string, boolean>>>({});
 
@@ -74,19 +79,51 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
     return () => window.removeEventListener("nexo_storage_updated", handleSync);
   }, []);
 
-  const vehicle = vehicles.find((v) => v.id === resolvedParams.id) || vehicles[0] || mockVehicles[0];
+  const vehicle = vehicles.find((v) => v.id === resolvedParams.id);
 
   const [activeTab, setActiveTab] = useState<
     "general" | "fotos" | "gastos" | "publicaciones" | "leads" | "docs" | "historial"
   >("general");
 
-  const [selectedPhoto, setSelectedPhoto] = useState(vehicle.images[0]);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [studioProcessing, setStudioProcessing] = useState(false);
   const [studioStatusText, setStudioStatusText] = useState("");
   const [activeEnhancement, setActiveEnhancement] = useState<"none" | "scratch_removed" | "showroom" | "plate_cover">("none");
   const [showOriginal, setShowOriginal] = useState(false);
   const [docModalOpen, setDocModalOpen] = useState(false);
   const [selectedDocData, setSelectedDocData] = useState<DocumentData | null>(null);
+
+  if (!vehicle) {
+    return (
+      <div className="space-y-6">
+        <Link
+          href="/vehicles"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Volver al Inventario</span>
+        </Link>
+        <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-900/40 p-12 text-center my-6">
+          <div className="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 text-slate-400 mx-auto flex items-center justify-center mb-4">
+            <Car className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">Vehículo no encontrado</h3>
+          <p className="text-xs text-slate-400 max-w-md mx-auto mb-6">
+            El vehículo seleccionado no se encuentra en el inventario actual (puede haber sido eliminado o el inventario está vacío).
+          </p>
+          <Link
+            href="/vehicles"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-lg shadow-blue-600/20"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Volver a la lista de vehículos</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const activePhoto = selectedPhoto || (vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1200&q=80");
 
   const getVehicleDocData = (type: "contrato" | "factura" | "reserva" | "entrega"): DocumentData => {
     return {
@@ -497,7 +534,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
             <div className="lg:col-span-2 space-y-3">
               <div className="relative aspect-[16/10] w-full rounded-3xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl group">
                 <img
-                  src={selectedPhoto}
+                  src={activePhoto}
                   alt={vehicle.title}
                   className={`w-full h-full object-cover transition-all duration-700 ${
                     activeEnhancement === "showroom" && !showOriginal
@@ -620,7 +657,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ id: st
                       setActiveEnhancement("none");
                     }}
                     className={`relative aspect-[16/10] rounded-xl overflow-hidden border-2 transition-all ${
-                      selectedPhoto === img
+                      activePhoto === img
                         ? "border-blue-500 scale-105 shadow-lg shadow-blue-500/20"
                         : "border-slate-800 opacity-70 hover:opacity-100"
                     }`}
