@@ -180,6 +180,54 @@ export function bulkImportVehicles(newVehicles: Vehicle[]): Vehicle[] {
     localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(updated));
     window.dispatchEvent(new Event("nexo_storage_updated"));
   }
+
+  // Cloud Sync to Supabase PostgreSQL
+  if (isSupabaseConfigured && supabase && newVehicles.length > 0) {
+    const payload = newVehicles.map((v) => ({
+      id: v.id,
+      company_id: v.company_id || "comp-orlando",
+      brand: v.brand,
+      model: v.model,
+      version: v.version,
+      plate: v.plate,
+      vin: v.vin,
+      year: v.year,
+      mileage: v.mileage,
+      fuel_type: v.fuel_type,
+      transmission: v.transmission,
+      power_hp: v.power_hp,
+      color: v.color,
+      doors: v.doors || 5,
+      seats: v.seats || 5,
+      environmental_badge: v.environmental_badge || "C",
+      body_type: v.body_type || "turismo",
+      purchase_price: v.purchase_price,
+      preparation_costs: v.preparation_costs || 0,
+      additional_costs: v.additional_costs || 0,
+      total_cost: v.total_cost,
+      selling_price: v.selling_price,
+      financed_price: v.financed_price,
+      min_selling_price: v.min_selling_price,
+      tax_scheme: v.tax_scheme || "REBU",
+      status: v.status || "disponible",
+      location: v.location,
+      purchase_date: v.purchase_date,
+      supplier_name: v.supplier_name,
+      title: v.title,
+      description: v.description,
+      images: v.images,
+      equipment_list: v.equipment_list || [],
+      is_featured: v.is_featured || false,
+      published_on_web: v.published_on_web ?? true,
+      days_in_stock: v.days_in_stock || 1,
+      created_at: v.created_at || new Date().toISOString(),
+    }));
+
+    supabase.from("vehicles").upsert(payload).then(({ error }) => {
+      if (error) console.error("Cloud Supabase bulk upsert error:", error);
+    });
+  }
+
   return updated;
 }
 

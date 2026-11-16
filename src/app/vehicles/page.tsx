@@ -36,6 +36,7 @@ import {
 } from "@/lib/utils";
 import { vehicleMargin, urgencyReport } from "@/lib/finance";
 import { getStoredVehicles, bulkImportVehicles, deleteVehicle, saveVehicle, clearAllVehicles } from "@/lib/storage";
+import { CSVImportModal } from "@/components/vehicles/csv-import-modal";
 
 export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -45,7 +46,6 @@ export default function VehiclesPage() {
   const [fuelFilter, setFuelFilter] = useState<string>("all");
   const [companyFilter, setCompanyFilter] = useState<string>("all");
   const [importModalOpen, setImportModalOpen] = useState(false);
-  const [bulkTextInput, setBulkTextInput] = useState("");
 
   // Load from persistent storage on mount and subscribe to updates
   useEffect(() => {
@@ -113,66 +113,6 @@ export default function VehiclesPage() {
     document.body.removeChild(link);
   };
 
-  const handleBulkImport = () => {
-    if (!bulkTextInput.trim()) return;
-
-    // Simple parser: lines with: Marca, Modelo, Matrícula, Año, Km, PVP, Coste
-    const lines = bulkTextInput.trim().split("\n");
-    const newItems: Vehicle[] = [];
-
-    lines.forEach((line, i) => {
-      const parts = line.split(",").map(p => p.trim());
-      if (parts.length >= 5) {
-        const [brand, model, plate, year, mileage, pvp, cost] = parts;
-        newItems.push({
-          id: `veh-bulk-${Date.now()}-${i}`,
-          company_id: "comp-orlando",
-          brand: brand || "Desconocido",
-          model: model || "Modelo",
-          version: "Stock Orlando Cars",
-          plate: plate || `TEMP-${Math.floor(1000 + Math.random() * 9000)}`,
-          vin: `VIN${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-          year: Number(year) || 2022,
-          mileage: Number(mileage) || 50000,
-          fuel_type: "diesel",
-          transmission: "automatico",
-          power_hp: 150,
-          color: "Blanco",
-          doors: 5,
-          seats: 5,
-          environmental_badge: "C",
-          body_type: "berlina",
-          purchase_price: Number(cost) || 18000,
-          preparation_costs: 500,
-          additional_costs: 300,
-          total_cost: (Number(cost) || 18000) + 800,
-          selling_price: Number(pvp) || 22900,
-          tax_scheme: "REBU",
-          status: "disponible",
-          location: "Exposición Orlando Cars",
-          purchase_date: new Date().toISOString().split("T")[0],
-          title: `${brand} ${model} Importado`,
-          description: "Vehículo incorporado en carga masiva de stock.",
-          images: ["https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1200&q=80"],
-          equipment_list: ["Garantía Mecánica 12 Meses"],
-          is_featured: false,
-          published_on_web: true,
-          days_in_stock: 1,
-          created_at: new Date().toISOString(),
-        });
-      }
-    });
-
-    if (newItems.length > 0) {
-      bulkImportVehicles(newItems);
-      setBulkTextInput("");
-      setImportModalOpen(false);
-      alert(`¡${newItems.length} vehículos importados y guardados con éxito en la base de datos!`);
-    } else {
-      alert("Por favor introduce al menos una línea con formato: Marca, Modelo, Matrícula, Año, Km, PVP, Coste");
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Header & Main Actions */}
@@ -211,10 +151,11 @@ export default function VehiclesPage() {
           {/* Bulk Import Button */}
           <button
             onClick={() => setImportModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-300 hover:bg-purple-600/30 text-xs font-semibold transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-300 hover:bg-purple-600/30 text-xs font-semibold transition-all shadow-sm"
+            title="Importar archivo CSV de WordPress, Excel o CRM anterior"
           >
             <UploadCloud className="w-3.5 h-3.5" />
-            <span>Subir Stock Orlando</span>
+            <span>Migrar CSV / WordPress</span>
           </button>
 
           {/* Export button */}
@@ -365,7 +306,7 @@ export default function VehiclesPage() {
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 font-semibold text-xs transition-all"
             >
               <UploadCloud className="w-4 h-4" />
-              <span>Carga Masiva (Excel)</span>
+              <span>Importar CSV / WordPress</span>
             </button>
           </div>
         </div>
@@ -672,61 +613,14 @@ export default function VehiclesPage() {
         </div>
       )}
 
-      {/* Bulk Upload Stock Modal */}
-      {importModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <FileSpreadsheet className="w-5 h-5 text-purple-400" />
-                <h3 className="text-base font-bold text-white">Carga Masiva de Stock — Orlando Cars</h3>
-              </div>
-              <button
-                onClick={() => setImportModalOpen(false)}
-                className="text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Pega aquí el listado de vehículos procedentes de tu archivo Excel o CRM anterior. Una fila por vehículo con formato separado por comas:
-              <br />
-              <code className="text-purple-300 font-mono text-[11px] block mt-1.5 p-2 bg-slate-950 rounded-lg">
-                Marca, Modelo, Matrícula, Año, Kilómetros, PVP Venta, Coste Compra
-              </code>
-            </p>
-
-            <textarea
-              rows={6}
-              value={bulkTextInput}
-              onChange={(e) => setBulkTextInput(e.target.value)}
-              placeholder="Mercedes-Benz, Clase C 220d, 4921-MBZ, 2022, 60000, 31900, 26000&#10;BMW, X3 xDrive20d, 1204-LMC, 2021, 75000, 35900, 29500&#10;Audi, A4 Avant S-Line, 8820-KXZ, 2020, 89000, 24500, 19800"
-              className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500"
-            />
-
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-[11px] text-slate-500">
-                Se guardará inmediatamente en memoria y base de datos local.
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setImportModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleBulkImport}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-600/30"
-                >
-                  Importar Flota
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Smart CSV & WordPress Bulk Importer Modal */}
+      <CSVImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onSuccess={(count) => {
+          setVehicles(getStoredVehicles());
+        }}
+      />
     </div>
   );
 }
