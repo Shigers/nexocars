@@ -42,6 +42,7 @@ export default function VehiclesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [fuelFilter, setFuelFilter] = useState<string>("all");
+  const [companyFilter, setCompanyFilter] = useState<string>("all");
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [bulkTextInput, setBulkTextInput] = useState("");
 
@@ -84,8 +85,9 @@ export default function VehiclesPage() {
 
     const matchesStatus = statusFilter === "all" || v.status === statusFilter;
     const matchesFuel = fuelFilter === "all" || v.fuel_type === fuelFilter;
+    const matchesCompany = companyFilter === "all" || v.company_id === companyFilter;
 
-    return matchesSearch && matchesStatus && matchesFuel;
+    return matchesSearch && matchesStatus && matchesFuel && matchesCompany;
   });
 
   const totalValue = filteredVehicles.reduce((acc, v) => acc + v.selling_price, 0);
@@ -285,7 +287,17 @@ export default function VehiclesPage() {
         </div>
 
         {/* Status Select */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+          <select
+            value={companyFilter}
+            onChange={(e) => setCompanyFilter(e.target.value)}
+            className="px-3 py-2 bg-slate-900 border border-blue-500/40 rounded-xl text-xs text-cyan-300 font-semibold focus:outline-none focus:border-blue-500"
+          >
+            <option value="all">Sede: Todas</option>
+            <option value="comp-orlando">Orlando Cars</option>
+            <option value="comp-loewe">Loewe Cars</option>
+          </select>
+
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -381,7 +393,18 @@ export default function VehiclesPage() {
                   <div className="p-4 space-y-3">
                     <div>
                       <div className="flex items-center justify-between text-[11px] text-slate-400 mb-0.5">
-                        <span className="font-medium text-blue-400">{vehicle.brand}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-blue-400">{vehicle.brand}</span>
+                          {vehicle.company_id === "comp-loewe" ? (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold tracking-wider">
+                              LOEWE
+                            </span>
+                          ) : (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 font-bold tracking-wider">
+                              ORLANDO
+                            </span>
+                          )}
+                        </div>
                         <span className="font-mono text-purple-300">{vehicle.tax_scheme || "REBU"}</span>
                       </div>
                       <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1">

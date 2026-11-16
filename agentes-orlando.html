@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orlando Cars AI — Suite Operativa en Vivo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 500: '#2563eb', 600: '#1d4ed8' }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #070b14; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #334155; }
+  </style>
+</head>
+<body class="bg-[#050811] text-slate-100 min-h-screen p-3 md:p-6 custom-scrollbar">
+
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-xl shadow-blue-500/20 font-black text-xl">
+          <span>O</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl font-bold text-white tracking-tight">Orlando Cars AI Hub</h1>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              ● MOTOR EN VIVO ACTIVO
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Tus 3 agentes para Orlando Cars: Ventas, Compras y Marketing</p>
+        </div>
+      </div>
+
+      <!-- Agent Switcher -->
+      <div class="flex items-center bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-xs shadow-lg flex-wrap gap-1">
+        <button onclick="selectAgent('ventas')" id="btn-agent-ventas" class="agent-btn flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-all bg-blue-600 text-white shadow-md shadow-blue-600/30">
+          <i class="fa-solid fa-comments"></i>
+          <span>1. Agente de Ventas</span>
+        </button>
+        <button onclick="selectAgent('compras')" id="btn-agent-compras" class="agent-btn flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-all text-slate-400 hover:text-white">
+          <i class="fa-solid fa-calculator"></i>
+          <span>2. Agente de Compras & Tasador</span>
+        </button>
+        <button onclick="selectAgent('marketing')" id="btn-agent-marketing" class="agent-btn flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-all text-slate-400 hover:text-white">
+          <i class="fa-solid fa-bullhorn"></i>
+          <span>3. Agente de Marketing & Reels</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero Title & The 3 Big Step Buttons -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <h2 id="hero-title" class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+          Tu agente de ventas en acción.
+        </h2>
+        <p id="hero-desc" class="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+          Navega por las 3 fases: <strong>1. Configurar</strong> las reglas, <strong>2. Probar en Vivo</strong> las respuestas y cálculos, y <strong>3. Activar</strong> para tu trabajo diario.
+        </p>
+      </div>
+
+      <!-- The 3 Step Buttons Requested By User -->
+      <div class="flex items-center bg-slate-900 border border-slate-800 p-1.5 rounded-2xl text-xs shadow-xl">
+        <button onclick="switchStep(1)" id="step-pill-1" class="step-pill flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold transition-all text-slate-400 hover:text-white">
+          <i class="fa-solid fa-gear"></i>
+          <span>1. Configurar</span>
+        </button>
+        <button onclick="switchStep(2)" id="step-pill-2" class="step-pill flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold transition-all bg-blue-600 text-white shadow-md shadow-blue-600/30">
+          <i class="fa-solid fa-fire text-amber-300"></i>
+          <span>2. Probar en Vivo 🔥</span>
+        </button>
+        <button onclick="switchStep(3)" id="step-pill-3" class="step-pill flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold transition-all text-slate-400 hover:text-white">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>3. Activar</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- STEP 1 SCREEN: CONFIGURAR REGLAS DEL AGENTE                           -->
+    <!-- ===================================================================== -->
+    <div id="step-screen-1" class="hidden bg-slate-900/90 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
+      <div class="pb-4 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-gear text-blue-400"></i>
+            <span>Paso 1 · Configurar Reglas y Personalidad del Agente</span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">
+            Aquí configuras el cerebro del agente para que responda y calcule exactamente como se trabaja en Orlando Cars.
+          </p>
+        </div>
+        <span class="text-xs font-mono text-cyan-400 bg-cyan-950/60 px-3 py-1 rounded-xl border border-cyan-800">
+          FASE 1: APRENDIZAJE
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Card 1: Tono Comercial -->
+        <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+          <span class="text-[10px] font-bold text-blue-400 uppercase tracking-wider block">1. Tono de Comunicación</span>
+          <h4 class="text-xs font-bold text-white">¿Cómo debe hablar con los clientes?</h4>
+          <div class="space-y-2 text-xs">
+            <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-blue-500/50 text-white cursor-pointer">
+              <input type="radio" name="tone" checked class="text-blue-600">
+              <div>
+                <div class="font-bold">Comercial de Cierre Rápido</div>
+                <div class="text-[10px] text-slate-400">Cercano, contesta dudas y siempre cierra pidiendo cita para ver el coche.</div>
+              </div>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 cursor-pointer hover:text-white">
+              <input type="radio" name="tone" class="text-blue-600">
+              <div>
+                <div class="font-bold">Formal Concesionario</div>
+                <div class="text-[10px] text-slate-400">Trato de usted, formal y técnico.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Card 2: Condiciones de Venta -->
+        <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+          <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">2. Condiciones Orlando Cars</span>
+          <h4 class="text-xs font-bold text-white">Datos que el agente debe memorizar</h4>
+          <div class="space-y-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+              <span class="text-slate-400 block text-[10px]">Garantía Oficial:</span>
+              <strong class="text-white">12 Meses Nacional en taller oficial</strong>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+              <span class="text-slate-400 block text-[10px]">Financiación:</span>
+              <strong class="text-white">100% Sin Entrada (Santander/BBVA)</strong>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+              <span class="text-slate-400 block text-[10px]">Fiscalidad:</span>
+              <strong class="text-white">Régimen Especial REBU (Arts. 135-139)</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Reglas de Tasación -->
+        <div class="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+          <span class="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">3. Reglas de Margen (Compras)</span>
+          <h4 class="text-xs font-bold text-white">Filtros para no perder dinero</h4>
+          <div class="space-y-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+              <span class="text-slate-400 block text-[10px]">Margen Neto Mínimo Orlando:</span>
+              <strong class="text-emerald-400">1.800 € o 15% del PVP</strong>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-900 border border-slate-800">
+              <span class="text-slate-400 block text-[10px]">Presupuesto Taller + DGT + Póliza:</span>
+              <strong class="text-amber-400">980 € de media por coche</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-slate-800 flex justify-end">
+        <button onclick="switchStep(2)" class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 flex items-center gap-2">
+          <span>Guardar Configuración y Pasar a Probar en Vivo</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- STEP 2 SCREEN: PROBAR EN VIVO (EL SIMULADOR INTERACTIVO)             -->
+    <!-- ===================================================================== -->
+    <div id="step-screen-2" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- LEFT: Live Channel Status (4 cols) -->
+      <div class="lg:col-span-4 bg-gradient-to-b from-[#0c1322] via-[#090e1a] to-[#050811] border border-blue-900/30 rounded-3xl p-5 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div class="flex items-center gap-2 text-xs font-bold text-slate-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span id="channel-box-title">CANALES VINCULADOS</span>
+          </div>
+          <span class="text-[10px] text-cyan-400 font-mono">ORLANDO CARS</span>
+        </div>
+
+        <div id="channels-list" class="space-y-2.5">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Stock Selector Quick Dropdown -->
+        <div class="pt-3 border-t border-slate-800/80 space-y-2">
+          <label class="text-[11px] font-bold text-slate-400 block">🚗 Seleccionar Coche para la Prueba:</label>
+          <select id="quick-stock-select" onchange="loadStockPreset(this.value)" class="w-full bg-slate-950 border border-slate-800 text-cyan-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500">
+            <option value="golf">Volkswagen Golf 2.0 TDI R-Line (23.900 €)</option>
+            <option value="audi">Audi A4 2.0 TDI S-Line 2021 (24.900 €)</option>
+            <option value="porsche">Porsche Macan GTS 2022 (68.500 €)</option>
+            <option value="leon">Seat León 1.5 TSI 2020 (17.800 €)</option>
+          </select>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-blue-950/20 border border-blue-800/30 text-[11px] text-slate-300 leading-relaxed">
+          <strong class="text-cyan-400">💡 Modo Ensayo:</strong> Toca las preguntas de prueba a la derecha. Verás cómo el agente redacta con las cuotas y los datos del coche seleccionado.
+        </div>
+      </div>
+
+      <!-- RIGHT: Interactive Engine (8 cols) -->
+      <div class="lg:col-span-8 bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
+
+        <!-- VIEW: AGENTE DE VENTAS -->
+        <div id="view-ventas" class="space-y-6">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                <i class="fa-brands fa-whatsapp text-sm"></i>
+                Simulador de WhatsApp (Toca una pregunta para probar):
+              </h3>
+              <span class="text-[10px] text-slate-400">Respuesta en 0.2s</span>
+            </div>
+
+            <!-- Quick Question Chips -->
+            <div class="flex flex-wrap gap-2">
+              <button onclick="simulateLeadQuestion('¿Sigue disponible y aceptáis mi coche a cambio?')" class="chip-btn text-[11px] px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-blue-600 border border-slate-800 hover:border-blue-500 text-slate-300 hover:text-white transition-all font-medium">
+                ¿Disponible + Coche a cambio?
+              </button>
+              <button onclick="simulateLeadQuestion('¿Cuánto me queda la cuota al mes sin dar entrada a 6 años?')" class="chip-btn text-[11px] px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-blue-600 border border-slate-800 hover:border-blue-500 text-slate-300 hover:text-white transition-all font-medium">
+                Simulación cuota sin entrada
+              </button>
+              <button onclick="simulateLeadQuestion('¿El precio es negociable si pago al contado hoy?')" class="chip-btn text-[11px] px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-blue-600 border border-slate-800 hover:border-blue-500 text-slate-300 hover:text-white transition-all font-medium">
+                ¿Rebaja de precio al contado?
+              </button>
+              <button onclick="simulateLeadQuestion('¿Qué garantía dais y cómo entregáis el vehículo?')" class="chip-btn text-[11px] px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-blue-600 border border-slate-800 hover:border-blue-500 text-slate-300 hover:text-white transition-all font-medium">
+                Garantía y entrega
+              </button>
+            </div>
+
+            <!-- WhatsApp Chat Preview Box -->
+            <div class="rounded-2xl bg-[#0b141a] border border-[#202c33] p-4 space-y-3 shadow-inner">
+              <div class="flex justify-end">
+                <div class="bg-[#005c4b] text-white p-3 rounded-2xl rounded-tr-none text-xs max-w-md shadow-sm">
+                  <p id="chat-customer-msg">¿Sigue disponible y aceptáis mi coche a cambio?</p>
+                  <span class="text-[9px] text-emerald-200 float-right mt-1 ml-2">11:42 ✔✔</span>
+                </div>
+              </div>
+
+              <div class="flex justify-start">
+                <div class="bg-[#202c33] text-slate-100 p-3.5 rounded-2xl rounded-tl-none text-xs max-w-lg shadow-sm space-y-2 border border-[#2a3942]">
+                  <div class="text-[10px] text-cyan-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>Agente Orlando Cars (Respuesta en directo):</span>
+                  </div>
+                  <p id="chat-agent-msg" class="whitespace-pre-line leading-relaxed">
+                    ¡Hola! Sí, el Volkswagen Golf 2.0 TDI R-Line sigue totalmente disponible en nuestra exposición de Orlando Cars.
+                    
+                    Y sí, ¡aceptamos tu coche actual como parte de pago! Te lo tasamos en el acto y descontamos su valor directamente del precio.
+                    
+                    ¿Te vendría bien pasar a verlo y probarlo mañana sobre las 11:30 o prefieres por la tarde? También te puedo enviar un vídeo detallado si lo prefieres. 🚗✨
+                  </p>
+                  <div class="pt-2 flex items-center justify-between border-t border-slate-700/60">
+                    <span class="text-[9px] text-slate-400">11:42</span>
+                    <button onclick="copyCurrentChat()" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] flex items-center gap-1">
+                      <i class="fa-regular fa-copy"></i>
+                      <span id="copy-chat-text">Copiar para enviar</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-Portal Ad Generator -->
+          <div class="pt-4 border-t border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-2">
+                <i class="fa-solid fa-share-nodes text-sm"></i>
+                Anuncios Multi-Portal generados automáticamente:
+              </h3>
+            </div>
+
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <button onclick="switchPortalTab('wallapop')" id="ptab-wallapop" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 shadow-md">Wallapop</button>
+                <button onclick="switchPortalTab('cochesnet')" id="ptab-cochesnet" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">Coches.net (REBU)</button>
+                <button onclick="switchPortalTab('milanuncios')" id="ptab-milanuncios" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">Milanuncios SEO</button>
+              </div>
+
+              <button onclick="copyCurrentPortalText()" class="px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5">
+                <i class="fa-regular fa-copy"></i>
+                <span id="copy-portal-btn-text">Copiar Anuncio</span>
+              </button>
+            </div>
+
+            <div id="portal-ad-display" class="bg-slate-950 border border-slate-800 rounded-2xl p-4 font-mono text-xs text-slate-200 whitespace-pre-wrap leading-relaxed max-h-56 overflow-y-auto custom-scrollbar">
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW: AGENTE DE COMPRAS & TASADOR -->
+        <div id="view-compras" class="hidden space-y-6">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-calculator text-amber-400"></i>
+                Calculadora de Tasación en Vivo con Margen REBU
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Mueve el año o los kilómetros: los cálculos de dinero se actualizan al instante.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label class="text-[11px] font-semibold text-slate-400 block mb-1">Coche Cliente</label>
+              <input type="text" id="t-car" oninput="recalcTasacion()" value="Seat León 1.6 TDI" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+            <div>
+              <label class="text-[11px] font-semibold text-slate-400 block mb-1">Año (<span id="t-year-val">2017</span>)</label>
+              <input type="range" id="t-year" min="2012" max="2024" value="2017" oninput="document.getElementById('t-year-val').textContent=this.value; recalcTasacion()" class="w-full">
+            </div>
+            <div>
+              <label class="text-[11px] font-semibold text-slate-400 block mb-1">Kilómetros</label>
+              <input type="number" id="t-km" oninput="recalcTasacion()" value="125000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+            </div>
+            <div>
+              <label class="text-[11px] font-semibold text-slate-400 block mb-1">Pide el cliente (€)</label>
+              <input type="number" id="t-asking" oninput="recalcTasacion()" value="9500" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-bold">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+              <span class="text-[10px] text-slate-500 font-bold block">PVP MERCADO REAL</span>
+              <span id="res-pvp" class="text-base font-black text-white mt-1 block">11.200 €</span>
+              <span class="text-[9px] text-slate-400">Venta en España</span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+              <span class="text-[10px] text-amber-500 font-bold block">REACONDICIONAMIENTO</span>
+              <span id="res-recon" class="text-base font-black text-amber-400 mt-1 block">-980 €</span>
+              <span class="text-[9px] text-slate-400">Taller + DGT + Garantía</span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
+              <span class="text-[10px] text-emerald-500 font-bold block">MARGEN ORLANDO</span>
+              <span id="res-margin" class="text-base font-black text-emerald-400 mt-1 block">+1.800 €</span>
+              <span class="text-[9px] text-slate-400">Beneficio limpio</span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-cyan-950/40 border border-cyan-800/60 shadow-lg">
+              <span class="text-[10px] text-cyan-400 font-bold block">OFERTA RECOMENDADA</span>
+              <span id="res-offer" class="text-base font-black text-cyan-300 mt-1 block">7.500 €</span>
+              <span id="res-ceiling" class="text-[9px] text-cyan-400/80">Techo: 8.420 €</span>
+            </div>
+          </div>
+
+          <div id="tasacion-badge" class="p-3 rounded-xl bg-emerald-950/30 border border-emerald-800/40 text-xs text-emerald-300 font-bold flex items-center justify-between">
+            <span>🟢 OPERACIÓN VIABLE: Puedes negociar hasta el techo sin perder margen.</span>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-shield-halved text-cyan-400"></i>
+                Argumentario para explicárselo al cliente sin ofenderle:
+              </span>
+              <button onclick="copyTasacionText()" class="text-xs text-cyan-400 hover:underline">Copiar Argumentario</button>
+            </div>
+            <p id="res-argument" class="text-xs text-slate-300 italic bg-slate-900/60 p-3 rounded-xl border border-slate-800 leading-relaxed"></p>
+          </div>
+        </div>
+
+        <!-- VIEW: AGENTE DE MARKETING -->
+        <div id="view-marketing" class="hidden space-y-6">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-film text-purple-400"></i>
+                Generador de Reels de 30s & Anuncios Meta
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Elige el estilo de vídeo que quieres grabar con tu móvil en la campa.</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <button onclick="generateReelStyle('novedad')" class="text-[11px] px-3.5 py-1.5 rounded-xl bg-purple-600 text-white font-bold">
+              🔥 Novedad recién llegada a la campa
+            </button>
+            <button onclick="generateReelStyle('chollo')" class="text-[11px] px-3.5 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300">
+              💶 Coche por menos de 300€/mes
+            </button>
+            <button onclick="generateReelStyle('estancado')" class="text-[11px] px-3.5 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300">
+              ⚡ Oferta de liquidación de la semana
+            </button>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-camera"></i>
+                Guion segundo a segundo para grabar en vertical (30s):
+              </span>
+              <button onclick="copyReelText()" class="text-xs text-cyan-400 hover:underline">Copiar Guion</button>
+            </div>
+            <div id="reel-script-box" class="font-mono text-xs text-slate-200 whitespace-pre-wrap bg-slate-900/60 p-3.5 rounded-xl border border-slate-800 leading-relaxed max-h-56 overflow-y-auto custom-scrollbar">
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-bullhorn"></i>
+                Copy publicitario para Instagram / Facebook Ads:
+              </span>
+              <button onclick="copyAdText()" class="text-xs text-cyan-400 hover:underline">Copiar Anuncio</button>
+            </div>
+            <p id="ad-copy-box" class="text-xs text-slate-300 whitespace-pre-wrap bg-slate-900/60 p-3 rounded-xl border border-slate-800 leading-relaxed"></p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- STEP 3 SCREEN: ACTIVAR EN ORLANDO CARS                                -->
+    <!-- ===================================================================== -->
+    <div id="step-screen-3" class="hidden bg-slate-900/90 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
+      <div class="pb-4 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-circle-check text-cyan-400"></i>
+            <span>Paso 3 · Activar Agente para tu Día a Día</span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">
+            Elige el modo de trabajo en el que quieres que opere este agente en Orlando Cars.
+          </p>
+        </div>
+        <span class="text-xs font-mono text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-xl border border-emerald-800">
+          OPERATIVO
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Mode 1: Copiloto Activo -->
+        <div class="p-6 rounded-3xl bg-slate-950 border-2 border-blue-500 shadow-2xl shadow-blue-500/10 space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase tracking-wider">
+              ACTIVO Y RECOMENDADO
+            </span>
+            <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+          </div>
+
+          <h4 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-user-shield text-blue-400"></i>
+            Modo Copiloto Personal
+          </h4>
+
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Es el modo que estás usando ahora mismo: el agente <strong>hace todos los cálculos y redacta todas las respuestas al instante</strong>, pero tú tienes el control y el botón de enviar o copiar.
+          </p>
+
+          <div class="p-3 rounded-xl bg-blue-950/30 border border-blue-800/40 text-xs text-blue-200 space-y-1">
+            <div>✔ No requiere pedir contraseñas a tu jefe.</div>
+            <div>✔ Lo tienes en tu Mac del trabajo y en tu móvil.</div>
+            <div>✔ Respondes en 15 segundos con máxima profesionalidad.</div>
+          </div>
+
+          <div class="pt-2">
+            <button onclick="switchStep(2)" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30">
+              Ir a Trabajar con el Copiloto
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode 2: Piloto Automático 24/7 -->
+        <div class="p-6 rounded-3xl bg-slate-950 border border-slate-800 space-y-4 opacity-90">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 uppercase tracking-wider">
+              PRÓXIMO PASO (CON APIS)
+            </span>
+            <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+          </div>
+
+          <h4 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-bolt text-amber-400"></i>
+            Modo Automático 24/7 (Desatendido)
+          </h4>
+
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Para que responda solo de noche y en fines de semana en el WhatsApp de Orlando Cars y agende citas en el calendario sin que tú toques el ordenador.
+          </p>
+
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-400 space-y-1">
+            <div>⏳ Requiere: Vincular número de WhatsApp Business de Orlando Cars.</div>
+            <div>⏳ Requiere: Acceso a cuentas de Wallapop Pro y Coches.net.</div>
+          </div>
+
+          <div class="pt-2">
+            <button disabled class="w-full py-3 rounded-xl bg-slate-800 text-slate-500 font-bold text-xs cursor-not-allowed">
+              Pendiente de Claves de Orlando Cars
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SCRIPT ENGINE -->
+  <script>
+    let currentCar = {
+      make: "Volkswagen",
+      model: "Golf 2.0 TDI R-Line",
+      year: 2021,
+      km: 62000,
+      price: 23900,
+      fuel: "Diésel",
+      cv: 150,
+      transmission: "Automático DSG",
+      extras: "Techo panorámico, Virtual Cockpit, Faros IQ.Light Matrix LED, Sensores 360 con cámara, Llantas 18"
+    };
+
+    let portalTexts = {};
+    let currentPortal = 'wallapop';
+
+    const stockPresets = {
+      golf: { make: "Volkswagen", model: "Golf 2.0 TDI R-Line", year: 2021, km: 62000, price: 23900, fuel: "Diésel", cv: 150, transmission: "Automático DSG", extras: "Techo panorámico, Virtual Cockpit, Faros IQ.Light Matrix LED, Llantas 18" },
+      audi: { make: "Audi", model: "A4 2.0 TDI S-Line", year: 2021, km: 68000, price: 24900, fuel: "Diésel", cv: 150, transmission: "Automático S-Tronic", extras: "Paquete S-Line interior y exterior, Matrix LED, Techo solar, Virtual Cockpit" },
+      porsche: { make: "Porsche", model: "Macan GTS", year: 2022, km: 41000, price: 68500, fuel: "Gasolina", cv: 440, transmission: "Automático PDK", extras: "Escape deportivo, Suspensión neumática PASM, Llantas 21 RS Spyder, Techo panorámico" },
+      leon: { make: "Seat", model: "León 1.5 TSI FR", year: 2020, km: 74000, price: 17800, fuel: "Gasolina", cv: 130, transmission: "Manual 6v", extras: "Acabado FR deportivo, Cuadro digital, Navegación, Modos de conducción" }
+    };
+
+    // SWITCH BETWEEN THE 3 BIG STEPS
+    function switchStep(stepNum) {
+      document.getElementById('step-screen-1').classList.toggle('hidden', stepNum !== 1);
+      document.getElementById('step-screen-2').classList.toggle('hidden', stepNum !== 2);
+      document.getElementById('step-screen-3').classList.toggle('hidden', stepNum !== 3);
+
+      for (let i = 1; i <= 3; i++) {
+        const pill = document.getElementById('step-pill-' + i);
+        if (i === stepNum) {
+          pill.className = 'step-pill flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold transition-all bg-blue-600 text-white shadow-md shadow-blue-600/30';
+        } else {
+          pill.className = 'step-pill flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold transition-all text-slate-400 hover:text-white';
+        }
+      }
+    }
+
+    function selectAgent(agent) {
+      document.querySelectorAll('.agent-btn').forEach(b => {
+        b.className = 'agent-btn flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-all text-slate-400 hover:text-white';
+      });
+      document.getElementById('btn-agent-' + agent).className = 'agent-btn flex items-center gap-2 px-3.5 py-2 rounded-xl font-bold transition-all bg-blue-600 text-white shadow-md shadow-blue-600/30';
+
+      document.getElementById('view-ventas').classList.toggle('hidden', agent !== 'ventas');
+      document.getElementById('view-compras').classList.toggle('hidden', agent !== 'compras');
+      document.getElementById('view-marketing').classList.toggle('hidden', agent !== 'marketing');
+
+      // Make sure we are in step 2 (Probar en vivo) when changing agent
+      switchStep(2);
+      updateChannelList(agent);
+
+      if (agent === 'ventas') {
+        document.getElementById('hero-title').textContent = "Tu agente de ventas en acción.";
+        document.getElementById('hero-desc').textContent = "Genera anuncios completos para Wallapop y Coches.net, y simula respuestas de WhatsApp con cuotas y cierre de citas.";
+      } else if (agent === 'compras') {
+        document.getElementById('hero-title').textContent = "Tu agente de compras y tasador VO.";
+        document.getElementById('hero-desc').textContent = "Mueve los deslizadores para ver cómo calcula en tiempo real el valor de mercado, los costes de reacondicionamiento y el margen REBU.";
+        recalcTasacion();
+      } else if (agent === 'marketing') {
+        document.getElementById('hero-title').textContent = "Tu agente de marketing y redes.";
+        document.getElementById('hero-desc').textContent = "Genera guiones con minutaje para grabar con el móvil en la campa y textos de anuncios para Facebook e Instagram Ads.";
+        generateReelStyle('novedad');
+      }
+    }
+
+    function updateChannelList(agent) {
+      const container = document.getElementById('channels-list');
+      if (agent === 'ventas') {
+        container.innerHTML = `
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-red-500/30 text-xs">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-car text-red-400"></i> Coches.net</span>
+            <span class="text-[9px] text-emerald-400 font-mono">CONECTADO</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-emerald-500/30 text-xs">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-store text-emerald-400"></i> Wallapop Pro</span>
+            <span class="text-[9px] text-emerald-400 font-mono">CONECTADO</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-green-500/30 text-xs">
+            <span class="flex items-center gap-2"><i class="fa-brands fa-whatsapp text-green-400"></i> WhatsApp Business</span>
+            <span class="text-[9px] text-emerald-400 font-mono">ACTIVO</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-blue-500/30 text-xs">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-globe text-blue-400"></i> Web Orlando Cars</span>
+            <span class="text-[9px] text-emerald-400 font-mono">EN LÍNEA</span>
+          </div>
+        `;
+      } else if (agent === 'compras') {
+        container.innerHTML = `
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-green-500/30 text-xs">
+            <span class="flex items-center gap-2"><i class="fa-brands fa-whatsapp text-green-400"></i> Tasaciones WhatsApp</span>
+            <span class="text-[9px] text-emerald-400 font-mono">LISTO</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-amber-500/30 text-xs">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-file-invoice text-amber-400"></i> Régimen IVA REBU</span>
+            <span class="text-[9px] text-cyan-400 font-mono">AUDITADO</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-blue-500/30 text-xs">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-id-card text-blue-400"></i> Tasa DGT (55,70 €)</span>
+            <span class="text-[9px] text-slate-400 font-mono">APLICADA</span>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-pink-500/30 text-xs">
+            <span class="flex items-center gap-2"><i class="fa-brands fa-instagram text-pink-400"></i> Instagram Reels</span>
+            <span class="text-[9px] text-emerald-400 font-mono">PREPARADO</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-purple-500/30 text-xs">
+            <span class="flex items-center gap-2"><i class="fa-brands fa-tiktok text-purple-400"></i> TikTok Vertical</span>
+            <span class="text-[9px] text-emerald-400 font-mono">PREPARADO</span>
+          </div>
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-950 border border-blue-500/30 text-xs">
+            <span class="flex items-center gap-2"><i class="fa-brands fa-meta text-blue-400"></i> Meta Ads</span>
+            <span class="text-[9px] text-cyan-400 font-mono">LISTO</span>
+          </div>
+        `;
+      }
+    }
+
+    function loadStockPreset(key) {
+      currentCar = stockPresets[key];
+      generateAllPortalAds();
+      simulateLeadQuestion("¿Sigue disponible y aceptáis mi coche a cambio?");
+      recalcTasacion();
+    }
+
+    function generateAllPortalAds() {
+      const formattedPrice = currentCar.price.toLocaleString('es-ES');
+      const formattedKm = currentCar.km.toLocaleString('es-ES');
+      const cuota = Math.round((currentCar.price * 1.25) / 84);
+
+      portalTexts.wallapop = `🔥 ${currentCar.make.toUpperCase()} ${currentCar.model.toUpperCase()} — ¡IMPECABLE ESTADO! 🔥\n\n📍 Disponible en Orlando Cars (Exposición y entrega inmediata)\n💶 Precio: ${formattedPrice} € (Financiación desde ${cuota} €/mes SIN entrada)\n\n✅ Año: ${currentCar.year}\n✅ Kilómetros: ${formattedKm} km certificados por contrato y DGT\n✅ Motor: ${currentCar.fuel} ${currentCar.cv} CV (${currentCar.transmission})\n✅ Distintivo ambiental DGT\n\n⭐ EQUIPAMIENTO:\n• ${currentCar.extras.split(',').map(e => e.trim()).join('\n• ')}\n\n🛡️ INCLUIDO EN EL PRECIO:\n- 12 MESES DE GARANTÍA MECÁNICA OFICIAL NACIONAL\n- Revisión completa de 100 puntos\n- Cambio de nombre y gestoría incluido\n- Aceptamos tu coche actual como parte de pago\n\n📲 Escríbenos por WhatsApp o chat para venir a probarlo hoy mismo.`;
+
+      portalTexts.cochesnet = `CONCESIONARIO OFICIAL ORLANDO CARS S.L.\nVEHÍCULO PROCEDENTE DE CONCESIONARIO OFICIAL — HISTORIAL CERTIFICADO\n\n${currentCar.make.toUpperCase()} ${currentCar.model.toUpperCase()} ${currentCar.cv}CV ${currentCar.transmission.toUpperCase()}\n\n• Precio al contado: ${formattedPrice} €\n• Precio financiado: ${formattedPrice} € (Consulta condiciones con cuotas desde ${cuota} €/mes sin entrada)\n• IVA incluido en régimen especial REBU (Arts. 135-139 Ley del IVA).\n\nCARACTERÍSTICAS:\n- Matriculación: ${currentCar.year}\n- Kilometraje: ${formattedKm} km certificados en factura y contrato\n- Motorización: ${currentCar.fuel} / ${currentCar.cv} CV / Cambio ${currentCar.transmission}\n- Libro de revisiones e historial al día\n- Libre de accidentes y cargas administrativas\n\nEQUIPAMIENTO DESTACADO:\n• ${currentCar.extras.split(',').map(e => e.trim()).join('\n• ')}\n\nCOMPROMISO Y GARANTÍA ORLANDO CARS:\n1. 12 Meses de Garantía Mecánica con cobertura en toda España.\n2. Certificación pericial de kilometraje y estructura.\n3. Gestión de financiación inmediata en 24h.\n\nContacta con nuestro equipo comercial para solicitar videollamada demostrativa.`;
+
+      portalTexts.milanuncios = `${currentCar.make} ${currentCar.model} año ${currentCar.year} con ${formattedKm}km en perfecto estado. Vehículo nacional con libro al día.\n\nEquipado con: ${currentCar.extras}.\n\nPrecio final con todo incluido: ${formattedPrice} € (IVA REBU, transferencia y 1 año de garantía incluidos sin letra pequeña).\nFinanciamos el 100% sin entrada desde ${cuota}€/mes.\nRecogemos vehículos como parte de pago. Tasamos en el acto.\n\nDisponible en Orlando Cars. Teléfono y WhatsApp de atención directa.\nPalabras clave: ocasion, segunda mano, oferta, impecable, garantia, audi, bmw, mercedes, volkswagen, seat.`;
+
+      switchPortalTab(currentPortal);
+    }
+
+    function switchPortalTab(portal) {
+      currentPortal = portal;
+      document.getElementById('ptab-wallapop').className = portal === 'wallapop' ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 shadow-md' : 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white';
+      document.getElementById('ptab-cochesnet').className = portal === 'cochesnet' ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-md' : 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white';
+      document.getElementById('ptab-milanuncios').className = portal === 'milanuncios' ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white shadow-md' : 'px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white';
+
+      document.getElementById('portal-ad-display').textContent = portalTexts[portal] || '';
+    }
+
+    function simulateLeadQuestion(q) {
+      document.getElementById('chat-customer-msg').textContent = q;
+      const cuota = Math.round((currentCar.price * 1.25) / 84);
+
+      let reply = "";
+      if (q.includes("disponible") || q.includes("cambio")) {
+        reply = `¡Hola! Sí, el ${currentCar.make} ${currentCar.model} sigue totalmente disponible en nuestra exposición de Orlando Cars.\n\nY sí, ¡aceptamos tu coche actual como parte de pago! Te lo tasamos en el acto y descontamos su valor directamente del precio.\n\n¿Te vendría bien pasar a verlo y probarlo mañana sobre las 11:30 o prefieres por la tarde? También te puedo enviar un vídeo detallado si lo prefieres. 🚗✨`;
+      } else if (q.includes("cuota") || q.includes("financ")) {
+        reply = `¡Buenas! Sí, en Orlando Cars financiamos el 100% sin entrada.\n\nPara el ${currentCar.make} ${currentCar.model} te sale una cuota muy cómoda de aproximadamente ${cuota} €/mes a 6-7 años. Solo se necesita nómina y DNI y la aprobación suele tardar menos de 24 horas.\n\n¿Quieres que te prepare una simulación personalizada sin compromiso?`;
+      } else if (q.includes("negociable") || q.includes("rebaja")) {
+        reply = `Hola. En Orlando Cars ajustamos los precios al límite para ofrecer la mejor relación calidad-precio del mercado.\n\nEl precio de ${currentCar.price.toLocaleString('es-ES')} € ya incluye 1 año de garantía oficial nacional, revisión integral y cambio de titularidad en gestoría.\n\nLo que sí podemos hacer es valorar tu coche si entregas uno a cambio para mejorar la tasación. Te invito a venir a probarlo y lo vemos con el coche delante. ¿Te encaja mañana?`;
+      } else {
+        reply = `¡Hola! El ${currentCar.make} ${currentCar.model} se entrega con revisión completa de 100 puntos y 12 MESES DE GARANTÍA OFICIAL con cobertura en cualquier taller de España.\n\n¿Te gustaría que te envíe un vídeo detallado o prefieres venir a probarlo a nuestras instalaciones?`;
+      }
+
+      document.getElementById('chat-agent-msg').textContent = reply;
+    }
+
+    function recalcTasacion() {
+      const car = document.getElementById('t-car').value;
+      const year = Number(document.getElementById('t-year').value);
+      const km = Number(document.getElementById('t-km').value);
+      const asking = Number(document.getElementById('t-asking').value);
+
+      const age = Math.max(1, 2026 - year);
+      let pvp = Math.round(24000 * Math.pow(0.86, age) - ((km - (age * 15000)) / 10000) * 350);
+      pvp = Math.max(3000, pvp);
+
+      const recon = 980;
+      const margin = Math.max(1600, Math.round(pvp * 0.15));
+
+      const techo = Math.max(1200, pvp - recon - margin);
+      const oferta = Math.round(techo * 0.9);
+
+      document.getElementById('res-pvp').textContent = pvp.toLocaleString('es-ES') + ' €';
+      document.getElementById('res-recon').textContent = '-' + recon + ' €';
+      document.getElementById('res-margin').textContent = '+' + margin.toLocaleString('es-ES') + ' €';
+      document.getElementById('res-offer').textContent = oferta.toLocaleString('es-ES') + ' €';
+      document.getElementById('res-ceiling').textContent = 'Techo: ' + techo.toLocaleString('es-ES') + ' €';
+
+      const badge = document.getElementById('tasacion-badge');
+      if (asking <= techo) {
+        badge.className = "p-3 rounded-xl bg-emerald-950/40 border border-emerald-800 text-xs text-emerald-300 font-bold";
+        badge.textContent = `🟢 OPERACIÓN VIABLE: El cliente pide ${asking.toLocaleString('es-ES')} € y tu techo es ${techo.toLocaleString('es-ES')} €. Hay margen garantizado.`;
+      } else {
+        badge.className = "p-3 rounded-xl bg-amber-950/40 border border-amber-800 text-xs text-amber-300 font-bold";
+        badge.textContent = `⚠️ ZONA DE NEGOCIACIÓN: El cliente pide ${asking.toLocaleString('es-ES')} € (por encima de tu techo de ${techo.toLocaleString('es-ES')} €). Debes usar el argumentario para bajarlo.`;
+      }
+
+      document.getElementById('res-argument').textContent = `«Para ser 100% transparentes: el precio medio al que se vende hoy en día un ${car} de ${year} en el mercado es de unos ${pvp.toLocaleString('es-ES')} €. Como concesionario profesional, por ley debemos hacerle revisión de taller y filtros, pintar detalles, pagar la tasa DGT de 55 € y contratar una póliza de garantía obligatoria de 1 año (unos 980 € de costes directos). Por eso, para comprárselo al contado hoy mismo y que usted se olvide de papeleo y averías con particulares, nuestra oferta firme es de ${oferta.toLocaleString('es-ES')} € (pudiendo llegar a ${techo.toLocaleString('es-ES')} € si cerramos la operación hoy).»`;
+    }
+
+    function generateReelStyle(style) {
+      let script = "";
+      let ad = "";
+
+      if (style === 'novedad') {
+        script = `🎬 GUION DE REEL (30s) — NOVEDAD EN CAMPA\n\n[00:00 - 00:03] GANCHO:\n(Cámara rápida hacia el frontal encendiendo las luces diurnas)\n"¿Buscando un coche impecable que no gaste nada? Ojo a lo que acaba de entrar a Orlando Cars."\n\n[00:04 - 00:15] DETALLES:\n(Tomas rápidas de llantas, techo panorámico y encendido del cuadro digital)\n"Hablamos de este ${currentCar.make} ${currentCar.model}. Viene cargadísimo de extras y con revisión integral recién hecha."\n\n[00:16 - 00:24] SEGURIDAD:\n"Kilómetros 100% certificados por contrato y te lo llevas con 1 año de garantía oficial nacional incluida."\n\n[00:25 - 00:30] LLAMADA A LA ACCIÓN:\n"Precio final: ${currentCar.price.toLocaleString('es-ES')} € o financiado a tu medida sin entrada. Escríbenos antes de que vuele. ¡Nos vemos en Orlando Cars!"`;
+        ad = `🚗 ¿BUSCAS COCHE CON GARANTÍA TOTAL Y ENTREGA INMEDIATA?\n\nPresentamos este flamante ${currentCar.make.toUpperCase()} ${currentCar.model.toUpperCase()}.\n\n💶 Precio: ${currentCar.price.toLocaleString('es-ES')} € (Financiación a tu medida)\n🛡️ 12 Meses de Garantía Oficial Nacional\n📋 Kilómetros certificados e historial al día\n🔄 Aceptamos tu vehículo actual como parte de pago\n\n📍 Ven a probarlo a nuestra exposición o solicita vídeo demostrativo por WhatsApp.`;
+      } else if (style === 'chollo') {
+        const cuota = Math.round((currentCar.price * 1.25) / 84);
+        script = `🎬 GUION DE REEL (30s) — FINANCIACIÓN DESDE ${cuota} €/MES\n\n[00:00 - 00:03] GANCHO:\n"¿Sabías que puedes llevarte un ${currentCar.make} deportivo por menos de lo que pagas de alquiler? Quédate que te lo enseño."\n\n[00:04 - 00:15] DETALLES:\n"Solo ${currentCar.km.toLocaleString('es-ES')} km, cambio ${currentCar.transmission} y todo este equipamiento: ${currentCar.extras}."\n\n[00:16 - 00:30] CTA:\n"Te lo financiamos al 100% sin entrada por solo ${cuota} €/mes. Respuesta bancaria en menos de 24 horas. ¡Pídenos información por privado!"`;
+        ad = `🔥 CUOTA DESDE SOLO ${cuota} €/MES SIN ENTRADA 🔥\n\nLlévate este ${currentCar.make} ${currentCar.model} totalmente equipado y revisado.\n\n✅ 1 Año de Garantía Oficial incluida\n✅ Aprobación de financiación en 24h\n✅ Entrega inmediata en Orlando Cars`;
+      } else {
+        script = `🎬 GUION DE REEL (30s) — LIQUIDACIÓN DE LA SEMANA\n\n[00:00 - 00:03] GANCHO:\n"Bajada de precio para entrega inmediata este fin de semana en Orlando Cars."\n\n[00:04 - 00:20] DETALLES:\n"${currentCar.make} ${currentCar.model} con libro de revisiones oficial, no fumador, y un estado de conservación de reestreno."\n\n[00:20 - 00:30] CTA:\n"El primero que reserve se lo lleva con el cambio de nombre de regalo. ¡Escríbenos ya!"`;
+        ad = `⚡ LIQUIDACIÓN ESPECIAL EN ORLANDO CARS ⚡\n\n${currentCar.make} ${currentCar.model} a precio de coste con transferencia incluida.\n\n¡Solo 1 unidad en stock! Reserva tu cita antes de que se venda.`;
+      }
+
+      document.getElementById('reel-script-box').textContent = script;
+      document.getElementById('ad-copy-box').textContent = ad;
+    }
+
+    function copyCurrentChat() {
+      navigator.clipboard.writeText(document.getElementById('chat-agent-msg').textContent);
+      document.getElementById('copy-chat-text').textContent = '¡Copiado!';
+      setTimeout(() => document.getElementById('copy-chat-text').textContent = 'Copiar para enviar', 1500);
+    }
+
+    function copyCurrentPortalText() {
+      navigator.clipboard.writeText(portalTexts[currentPortal]);
+      document.getElementById('copy-portal-btn-text').textContent = '¡Copiado!';
+      setTimeout(() => document.getElementById('copy-portal-btn-text').textContent = 'Copiar Anuncio', 1500);
+    }
+
+    function copyTasacionText() {
+      navigator.clipboard.writeText(document.getElementById('res-argument').textContent);
+      alert('¡Argumentario de tasación copiado al portapapeles!');
+    }
+
+    function copyReelText() {
+      navigator.clipboard.writeText(document.getElementById('reel-script-box').textContent);
+      alert('¡Guion de vídeo copiado!');
+    }
+
+    function copyAdText() {
+      navigator.clipboard.writeText(document.getElementById('ad-copy-box').textContent);
+      alert('¡Copy de anuncio copiado!');
+    }
+
+    // Init
+    selectAgent('ventas');
+    loadStockPreset('golf');
+    switchStep(2); // Start on live test
+  </script>
+</body>
+</html>
