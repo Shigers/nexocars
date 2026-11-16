@@ -35,7 +35,7 @@ import {
   calculateRealCurrentMargin,
 } from "@/lib/utils";
 import { vehicleMargin, urgencyReport } from "@/lib/finance";
-import { getStoredVehicles, bulkImportVehicles, deleteVehicle, saveVehicle, resetVehiclesToDefault } from "@/lib/storage";
+import { getStoredVehicles, bulkImportVehicles, deleteVehicle, saveVehicle, clearAllVehicles } from "@/lib/storage";
 
 export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -192,18 +192,20 @@ export default function VehiclesPage() {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
-          {/* Force Reload / Sync Full Stock */}
+          {/* Wipe All Vehicles Button */}
           <button
             onClick={() => {
-              const fresh = resetVehiclesToDefault();
-              setVehicles(fresh);
-              alert("¡Flota completa sincronizada (14 vehículos de Orlando Cars y Loewe Cars)!");
+              if (confirm("¿Estás seguro de que quieres eliminar todos los coches de ejemplo y dejar la app 100% limpia para tus vehículos reales?")) {
+                const empty = clearAllVehicles();
+                setVehicles(empty);
+                alert("¡Inventario vaciado por completo! La app está lista para que subas tus coches.");
+              }
             }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 text-xs font-semibold transition-all"
-            title="Recargar flota completa oficial de Orlando Cars y Loewe Cars"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 text-xs font-semibold transition-all"
+            title="Eliminar todos los coches de ejemplo y dejar el inventario en blanco"
           >
-            <RotateCw className="w-3.5 h-3.5" />
-            <span>Sincronizar Flota (14)</span>
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>Vaciar Inventario</span>
           </button>
 
           {/* Bulk Import Button */}
@@ -340,8 +342,34 @@ export default function VehiclesPage() {
         </div>
       </div>
 
-      {/* Vehicles View: Grid or Table */}
-      {viewMode === "grid" ? (
+      {/* Vehicles View: Grid or Table or Clean Empty State */}
+      {filteredVehicles.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-900/40 p-12 text-center my-6">
+          <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 mx-auto flex items-center justify-center mb-4">
+            <Car className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">Inventario Limpio (0 Vehículos)</h3>
+          <p className="text-xs text-slate-400 max-w-md mx-auto mb-6">
+            Todos los coches de ejemplo han sido retirados. La app está 100% limpia para que subas los vehículos reales de Orlando Cars o Loewe Cars poco a poco.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <Link
+              href="/vehicles/new"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-lg shadow-blue-600/20"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Añadir Primer Vehículo</span>
+            </Link>
+            <button
+              onClick={() => setImportModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 font-semibold text-xs transition-all"
+            >
+              <UploadCloud className="w-4 h-4" />
+              <span>Carga Masiva (Excel)</span>
+            </button>
+          </div>
+        </div>
+      ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredVehicles.map((vehicle) => {
             const statusBadge = getVehicleStatusBadge(vehicle.status);
@@ -505,7 +533,8 @@ export default function VehiclesPage() {
                     <button
                       onClick={() => {
                         if (confirm(`¿Eliminar ${vehicle.brand} ${vehicle.model} (${vehicle.plate}) de la base de datos?`)) {
-                          deleteVehicle(vehicle.id);
+                          const updated = deleteVehicle(vehicle.id);
+                          setVehicles(updated);
                         }
                       }}
                       className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
@@ -620,6 +649,18 @@ export default function VehiclesPage() {
                           >
                             Ver Ficha
                           </Link>
+                          <button
+                            onClick={() => {
+                              if (confirm(`¿Eliminar ${vehicle.brand} ${vehicle.model} (${vehicle.plate})?`)) {
+                                const updated = deleteVehicle(vehicle.id);
+                                setVehicles(updated);
+                              }
+                            }}
+                            className="p-1.5 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                            title="Eliminar de Stock"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>

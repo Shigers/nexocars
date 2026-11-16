@@ -5,7 +5,7 @@ import { mockVehicles, mockLeads, mockExpenses, mockAppointments, mockPortals } 
 import { supabase, isSupabaseConfigured } from "./supabase";
 
 const STORAGE_KEYS = {
-  VEHICLES: "nexo_car_vehicles_v3",
+  VEHICLES: "nexo_car_vehicles_clean_v1",
   LEADS: "nexo_car_leads_v2",
   EXPENSES: "nexo_car_expenses_v1",
   APPOINTMENTS: "nexo_car_appointments_v1",
@@ -17,89 +17,48 @@ const STORAGE_KEYS = {
 let hasFetchedFromSupabase = false;
 
 // ---------------------------------------------------------------------------
-// VEHICLES PERSISTENCE (Hybrid Offline-First + PostgreSQL Cloud Sync)
+// VEHICLES PERSISTENCE (Clean Slate, Zero Dummies, Real-time PostgreSQL Cloud Sync)
 // ---------------------------------------------------------------------------
-export function resetVehiclesToDefault(): Vehicle[] {
+export function clearAllVehicles(): Vehicle[] {
   if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(mockVehicles));
+    localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify([]));
     window.dispatchEvent(new Event("nexo_storage_updated"));
   }
-  return mockVehicles;
+  if (isSupabaseConfigured && supabase) {
+    supabase.from("vehicles").delete().neq("id", "none").then(() => {});
+  }
+  return [];
+}
+
+export function resetVehiclesToDefault(): Vehicle[] {
+  return clearAllVehicles();
 }
 
 export function getStoredVehicles(): Vehicle[] {
-  if (typeof window === "undefined") return mockVehicles;
+  if (typeof window === "undefined") return [];
 
   // Real-time Cloud Fetch from Supabase PostgreSQL
   if (isSupabaseConfigured && supabase && !hasFetchedFromSupabase) {
     hasFetchedFromSupabase = true;
+
+    // Purge legacy sample / dummy vehicle records from Supabase
+    supabase
+      .from("vehicles")
+      .delete()
+      .or("id.like.veh-00%,id.like.veh-loewe%")
+      .then(() => {});
+
     supabase
       .from("vehicles")
       .select("*")
       .order("created_at", { ascending: false })
-      .then(async ({ data, error }) => {
+      .then(({ data, error }) => {
         if (!error && data) {
-          const dbVehicles = data as Vehicle[];
-          const existingIds = new Set(dbVehicles.map((d) => d.id));
-          const existingPlates = new Set(dbVehicles.map((d) => d.plate));
-
-          // Retain mockVehicles that aren't in Supabase yet (e.g. Loewe fleet)
-          const missingMocks = mockVehicles.filter(
-            (m) => !existingIds.has(m.id) && !existingPlates.has(m.plate)
+          const realVehicles = (data as Vehicle[]).filter(
+            (v) => !v.id.startsWith("veh-00") && !v.id.startsWith("veh-loewe-")
           );
-
-          const combined = [...dbVehicles, ...missingMocks];
-          localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(combined));
+          localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(realVehicles));
           window.dispatchEvent(new Event("nexo_storage_updated"));
-
-          // Automatically sync missing Loewe and Orlando vehicles to Supabase PostgreSQL
-          if (missingMocks.length > 0 && supabase) {
-            for (const v of missingMocks) {
-              try {
-                await supabase.from("vehicles").upsert({
-                  id: v.id,
-                  company_id: v.company_id || "comp-orlando",
-                  brand: v.brand,
-                  model: v.model,
-                  version: v.version,
-                  plate: v.plate,
-                  vin: v.vin,
-                  year: v.year,
-                  mileage: v.mileage,
-                  fuel_type: v.fuel_type,
-                  transmission: v.transmission,
-                  power_hp: v.power_hp,
-                  color: v.color,
-                  doors: v.doors || 5,
-                  seats: v.seats || 5,
-                  environmental_badge: v.environmental_badge,
-                  body_type: v.body_type,
-                  purchase_price: v.purchase_price,
-                  preparation_costs: v.preparation_costs,
-                  additional_costs: v.additional_costs,
-                  total_cost: v.total_cost,
-                  selling_price: v.selling_price,
-                  financed_price: v.financed_price,
-                  min_selling_price: v.min_selling_price,
-                  tax_scheme: v.tax_scheme,
-                  status: v.status,
-                  location: v.location,
-                  purchase_date: v.purchase_date,
-                  supplier_name: v.supplier_name,
-                  title: v.title,
-                  description: v.description,
-                  images: v.images,
-                  equipment_list: v.equipment_list,
-                  is_featured: v.is_featured,
-                  published_on_web: v.published_on_web,
-                  days_in_stock: v.days_in_stock,
-                  created_at: v.created_at,
-                });
-              } catch (e) {
-                // Ignore silent network upsert errors
-              }
-            }
-          }
         }
       });
   }
@@ -107,21 +66,20 @@ export function getStoredVehicles(): Vehicle[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.VEHICLES);
     if (!raw) {
-      localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(mockVehicles));
-      return mockVehicles;
+      localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify([]));
+      return [];
     }
     const parsed: Vehicle[] = JSON.parse(raw);
-    const missingMocks = mockVehicles.filter(
-      (m) => !parsed.some((p) => p.id === m.id || p.plate === m.plate)
+    const cleaned = parsed.filter(
+      (v) => !v.id.startsWith("veh-00") && !v.id.startsWith("veh-loewe-")
     );
-    if (missingMocks.length > 0) {
-      const merged = [...parsed, ...missingMocks];
-      localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(merged));
-      return merged;
+    if (cleaned.length !== parsed.length) {
+      localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(cleaned));
+      return cleaned;
     }
     return parsed;
   } catch {
-    return mockVehicles;
+    return [];
   }
 }
 

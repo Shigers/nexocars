@@ -303,9 +303,18 @@ export default function PublicCatalogPage() {
           </div>
         </div>
 
-        {/* Vehicles Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((vehicle) => {
+        {/* Vehicles Grid or Clean Empty State */}
+        {filtered.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-900/40 p-12 text-center my-6">
+            <Car className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-white mb-1">No hay vehículos disponibles en este momento</h3>
+            <p className="text-xs text-slate-400">
+              El stock está listo para que se incorporen las unidades oficiales de Orlando Cars y Loewe Cars.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((vehicle) => {
             const monthly = calculateMonthlyEstimate(vehicle.selling_price, vehicle.financed_price);
             const isLoewe = vehicle.company_id === "comp-loewe";
 
@@ -418,6 +427,7 @@ export default function PublicCatalogPage() {
             );
           })}
         </div>
+      )}
       </main>
 
       {/* Public Footer */}
